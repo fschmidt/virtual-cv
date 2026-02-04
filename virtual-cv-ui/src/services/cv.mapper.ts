@@ -1,5 +1,6 @@
 import type { Node, Edge } from '@xyflow/react';
-import type { CVData, CVNode, CVProfileNode, NodeState, GraphNodeData } from '../types';
+import type { CVData, CVNode, CVProfileNode, CVCategoryNode, NodeState, GraphNodeData } from '../types';
+import { CV_SECTIONS } from '../types';
 import type { ContentMap } from './content.service';
 
 // Get all ancestor IDs for a given node
@@ -49,6 +50,11 @@ function isProfileNode(node: CVNode): node is CVProfileNode {
   return node.type === 'profile';
 }
 
+// Type guard for category node
+function isCategoryNode(node: CVNode): node is CVCategoryNode {
+  return node.type === 'category';
+}
+
 // Map CV node to React Flow node data
 function mapNodeToGraphData(
   node: CVNode,
@@ -73,6 +79,14 @@ function mapNodeToGraphData(
       location: node.location,
       photoUrl: node.photoUrl,
     };
+  }
+
+  // Add icon for category nodes
+  if (isCategoryNode(node)) {
+    const section = CV_SECTIONS.find((s) => s.id === node.sectionId);
+    if (section) {
+      base.icon = section.icon;
+    }
   }
 
   // Add other type-specific fields as needed

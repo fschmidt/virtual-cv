@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import Markdown from 'react-markdown';
+import SectionIcon from './SectionIcon';
 import type { NodeState, CVNodeType, GraphNodeData } from '../types';
 
 // Re-export types for backward compatibility
@@ -58,6 +59,18 @@ function GraphNode({ data }: GraphNodeProps) {
     return (
       <div className="graph-node profile quickview">
         <img src={data.photoUrl} alt={data.name} className="profile-photo" />
+        <Handle type="source" position={Position.Right} />
+        <Handle type="target" position={Position.Left} />
+      </div>
+    );
+  }
+
+  // Category node with icon
+  if (nodeType === 'category' && data.icon) {
+    return (
+      <div className={`graph-node ${nodeType} ${state}`}>
+        <SectionIcon icon={data.icon} size={state === 'detailed' ? 24 : 20} className="category-icon" />
+        <span className="node-label">{label}</span>
         <Handle type="source" position={Position.Right} />
         <Handle type="target" position={Position.Left} />
       </div>

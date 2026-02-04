@@ -24,6 +24,8 @@ export interface GraphNodeData {
   description?: string;
   // Markdown content for detailed view
   content?: string;
+  // Section icon for category nodes
+  icon?: string;
   // Index signature for React Flow compatibility
   [key: string]: unknown;
 }
