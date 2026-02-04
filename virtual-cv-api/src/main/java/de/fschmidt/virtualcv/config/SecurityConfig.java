@@ -18,6 +18,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public read endpoints
                 .requestMatchers("/api/cv/**").permitAll()
+                .requestMatchers("/api/health").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 // Everything else requires authentication (for future CMS)
                 .anyRequest().authenticated()
