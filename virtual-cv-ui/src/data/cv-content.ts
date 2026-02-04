@@ -20,7 +20,7 @@ const profile: CVProfileNode = {
   experience: '12+ Years Experience',
   email: 'fschmidt2011@gmail.com',
   location: 'Oberbarnim, Germany',
-  photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
+  photoUrl: 'https://www.gravatar.com/avatar/25bf785316eb59892ea99c72e92a6a45?s=200',
 };
 
 // Categories
