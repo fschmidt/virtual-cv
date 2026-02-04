@@ -15,6 +15,7 @@ import './App.css';
 import GraphNode from './components/GraphNode';
 import ViewToggle, { type ViewMode } from './components/ViewToggle';
 import StandardCVView from './components/StandardCVView';
+import SearchDialog from './components/SearchDialog';
 import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap } from './services';
 import type { CVData } from './types';
 import { CV_SECTIONS } from './types';
@@ -47,6 +48,7 @@ function Flow() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('graph');
   const [contentMap, setContentMap] = useState<ContentMap>({});
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [nodes, setNodes] = useNodesState(initialNodes);
   const [edges, setEdges] = useEdgesState(initialEdges);
   const { fitView } = useReactFlow();
@@ -77,13 +79,23 @@ function Flow() {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+K or Ctrl+K to open search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+      // Escape to close search or deselect node
       if (e.key === 'Escape') {
-        setSelectedId(null);
+        if (isSearchOpen) {
+          setIsSearchOpen(false);
+        } else {
+          setSelectedId(null);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isSearchOpen]);
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedId((current) => (current === node.id ? null : node.id));
@@ -95,6 +107,11 @@ function Flow() {
 
   const onHomeClick = useCallback(() => {
     setSelectedId(null);
+  }, []);
+
+  const onSearchSelect = useCallback((nodeId: string) => {
+    setSelectedId(nodeId);
+    setViewMode('graph'); // Switch to graph view if in CV view
   }, []);
 
   if (!cvData) {
@@ -121,6 +138,14 @@ function Flow() {
       ) : (
         <StandardCVView cvData={cvData} contentMap={contentMap} sections={CV_SECTIONS} />
       )}
+      <SearchDialog
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSelect={onSearchSelect}
+        cvData={cvData}
+        contentMap={contentMap}
+        sections={CV_SECTIONS}
+      />
     </div>
   );
 }
