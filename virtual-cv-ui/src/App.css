@@ -202,6 +202,94 @@
 }
 
 /* ===========================================
+   MARKDOWN CONTENT
+   =========================================== */
+.markdown-content {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 400px;
+}
+
+.markdown-content h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.markdown-content h3 {
+  margin: 12px 0 6px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.markdown-content p {
+  margin: 0 0 10px 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 8px 0;
+  padding-left: 18px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.markdown-content li {
+  margin: 4px 0;
+}
+
+.markdown-content strong {
+  color: white;
+  font-weight: 600;
+}
+
+.markdown-content code {
+  background: rgba(102, 126, 234, 0.2);
+  color: #a78bfa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.markdown-content a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.markdown-content a:hover {
+  text-decoration: underline;
+}
+
+/* Business card about section */
+.business-card-about {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.business-card-about p {
+  font-size: 0.75rem;
+  margin: 0 0 6px 0;
+}
+
+/* Detailed nodes with markdown - adjust sizing */
+.graph-node.item.detailed .markdown-content,
+.graph-node.skill.detailed .markdown-content,
+.graph-node.skill-group.detailed .markdown-content,
+.graph-node.category.detailed .markdown-content {
+  text-align: left;
+  white-space: normal;
+}
+
+/* ===========================================
    EDGES
    =========================================== */
 .react-flow__edge-path {

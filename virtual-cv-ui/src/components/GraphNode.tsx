@@ -1,27 +1,18 @@
 import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
+import Markdown from 'react-markdown';
+import type { NodeState, CVNodeType, GraphNodeData } from '../types';
 
-export type NodeState = 'detailed' | 'quickview' | 'dormant';
-export type NodeType = 'profile' | 'category' | 'item' | 'skill-group' | 'skill';
+// Re-export types for backward compatibility
+export type { NodeState };
+export type NodeType = CVNodeType;
 
 interface GraphNodeProps {
-  data: {
-    label: string;
-    nodeType: NodeType;
-    state: NodeState;
-    // Profile-specific data
-    name?: string;
-    title?: string;
-    subtitle?: string;
-    experience?: string;
-    email?: string;
-    location?: string;
-    photoUrl?: string;
-  };
+  data: GraphNodeData;
 }
 
 function GraphNode({ data }: GraphNodeProps) {
-  const { label, nodeType, state } = data;
+  const { label, nodeType, state, content } = data;
 
   // Dormant state - just a dot
   if (state === 'dormant') {
@@ -51,6 +42,11 @@ function GraphNode({ data }: GraphNodeProps) {
                 <span className="business-card-location">{data.location}</span>
                 <span className="business-card-email">{data.email}</span>
               </div>
+              {content && (
+                <div className="business-card-about markdown-content">
+                  <Markdown>{content}</Markdown>
+                </div>
+              )}
             </div>
           </div>
           <Handle type="source" position={Position.Right} />
@@ -68,7 +64,20 @@ function GraphNode({ data }: GraphNodeProps) {
     );
   }
 
-  // All other nodes
+  // Detailed state with markdown content
+  if (state === 'detailed' && content) {
+    return (
+      <div className={`graph-node ${nodeType} ${state}`}>
+        <div className="markdown-content">
+          <Markdown>{content}</Markdown>
+        </div>
+        <Handle type="source" position={Position.Right} />
+        <Handle type="target" position={Position.Left} />
+      </div>
+    );
+  }
+
+  // Quickview and fallback for detailed without content
   return (
     <div className={`graph-node ${nodeType} ${state}`}>
       <span className="node-label">{label}</span>
