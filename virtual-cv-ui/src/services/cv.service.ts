@@ -1,7 +1,112 @@
-import type { CVData, CVNode } from '../types';
-import { cvData } from '../data/cv-content';
+import type {
+  CVData,
+  CVNode,
+  CVProfileNode,
+  CVCategoryNode,
+  CVItemNode,
+  CVSkillGroupNode,
+  CVSkillNode,
+  CVNodeType,
+  CVSectionId,
+  NodePosition,
+} from '../types';
+import { getAllNodes, search, CvNodeDtoType } from '../api/generated';
+import type { CvNodeDto } from '../api/generated';
 
-// Service interface (matches future real API)
+// Map API node type to frontend node type
+function mapNodeType(apiType: CvNodeDtoType): CVNodeType {
+  const mapping: Record<CvNodeDtoType, CVNodeType> = {
+    PROFILE: 'profile',
+    CATEGORY: 'category',
+    ITEM: 'item',
+    SKILL_GROUP: 'skill-group',
+    SKILL: 'skill',
+  };
+  return mapping[apiType];
+}
+
+// Extract attribute safely
+function attr<T>(attributes: Record<string, unknown> | undefined, key: string): T | undefined {
+  return attributes?.[key] as T | undefined;
+}
+
+// Map API node to frontend node based on type
+function mapApiNodeToFrontend(dto: CvNodeDto): CVNode {
+  const type = mapNodeType(dto.type!);
+  const attributes = dto.attributes as Record<string, unknown> | undefined;
+
+  const base = {
+    id: dto.id!,
+    parentId: dto.parentId ?? null,
+    label: dto.label ?? '',
+    description: dto.description,
+  };
+
+  switch (type) {
+    case 'profile':
+      return {
+        ...base,
+        type: 'profile',
+        name: attr<string>(attributes, 'name') ?? dto.label ?? '',
+        title: attr<string>(attributes, 'title') ?? '',
+        subtitle: attr<string>(attributes, 'subtitle') ?? '',
+        experience: attr<string>(attributes, 'experience') ?? '',
+        email: attr<string>(attributes, 'email') ?? '',
+        location: attr<string>(attributes, 'location') ?? '',
+        photoUrl: attr<string>(attributes, 'photoUrl') ?? '',
+      } as CVProfileNode;
+
+    case 'category':
+      return {
+        ...base,
+        type: 'category',
+        sectionId: (attr<string>(attributes, 'sectionId') ?? dto.id) as CVSectionId,
+      } as CVCategoryNode;
+
+    case 'item':
+      return {
+        ...base,
+        type: 'item',
+        company: attr<string>(attributes, 'company'),
+        dateRange: attr<string>(attributes, 'dateRange'),
+        location: attr<string>(attributes, 'location'),
+        highlights: attr<string[]>(attributes, 'highlights'),
+        technologies: attr<string[]>(attributes, 'technologies'),
+      } as CVItemNode;
+
+    case 'skill-group':
+      return {
+        ...base,
+        type: 'skill-group',
+        proficiencyLevel: attr<CVSkillGroupNode['proficiencyLevel']>(attributes, 'proficiencyLevel'),
+      } as CVSkillGroupNode;
+
+    case 'skill':
+      return {
+        ...base,
+        type: 'skill',
+        proficiencyLevel: attr<CVSkillNode['proficiencyLevel']>(attributes, 'proficiencyLevel'),
+        yearsOfExperience: attr<number>(attributes, 'yearsOfExperience'),
+      } as CVSkillNode;
+  }
+}
+
+// Map API response to CVData with positions
+function mapApiResponse(nodes: CvNodeDto[]): CVData {
+  const cvNodes: CVNode[] = nodes.map(mapApiNodeToFrontend);
+
+  const positions: NodePosition[] = nodes
+    .filter((n) => n.positionX != null && n.positionY != null)
+    .map((n) => ({
+      nodeId: n.id!,
+      x: n.positionX!,
+      y: n.positionY!,
+    }));
+
+  return { nodes: cvNodes, positions };
+}
+
+// Service interface
 export interface CVService {
   getCVData(): Promise<CVData>;
   getNode(id: string): Promise<CVNode | undefined>;
@@ -9,42 +114,46 @@ export interface CVService {
   searchNodes(query: string): Promise<CVNode[]>;
 }
 
-// Mock implementation using local data
-class MockCVService implements CVService {
-  private data: CVData;
-
-  constructor(data: CVData) {
-    this.data = data;
-  }
+// Real API implementation
+class ApiCVService implements CVService {
+  private cachedData: CVData | null = null;
 
   async getCVData(): Promise<CVData> {
-    // Simulate network delay (useful for testing loading states)
-    // await new Promise(resolve => setTimeout(resolve, 100));
-    return this.data;
+    if (this.cachedData) {
+      return this.cachedData;
+    }
+
+    const response = await getAllNodes();
+    const nodes = response.data.nodes ?? [];
+    this.cachedData = mapApiResponse(nodes);
+    return this.cachedData;
   }
 
   async getNode(id: string): Promise<CVNode | undefined> {
-    return this.data.nodes.find((n) => n.id === id);
+    const data = await this.getCVData();
+    return data.nodes.find((n) => n.id === id);
   }
 
   async getChildren(parentId: string): Promise<CVNode[]> {
-    return this.data.nodes.filter((n) => n.parentId === parentId);
+    const data = await this.getCVData();
+    return data.nodes.filter((n) => n.parentId === parentId);
   }
 
   async searchNodes(query: string): Promise<CVNode[]> {
-    const lowerQuery = query.toLowerCase();
-    return this.data.nodes.filter(
-      (n) =>
-        n.label.toLowerCase().includes(lowerQuery) ||
-        n.description?.toLowerCase().includes(lowerQuery)
-    );
+    const response = await search({ q: query });
+    return (response.data ?? []).map(mapApiNodeToFrontend);
+  }
+
+  // Clear cache to force reload
+  clearCache(): void {
+    this.cachedData = null;
   }
 }
 
 // Export singleton instance
-export const cvService: CVService = new MockCVService(cvData);
+export const cvService: CVService = new ApiCVService();
 
-// Factory for testing or switching implementations
-export function createCVService(data?: CVData): CVService {
-  return new MockCVService(data ?? cvData);
+// Factory for testing
+export function createCVService(): CVService {
+  return new ApiCVService();
 }
