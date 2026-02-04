@@ -20,6 +20,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/cv/**").permitAll()
                 .requestMatchers("/api/health").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
+                // OpenAPI/Swagger
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
                 // Everything else requires authentication (for future CMS)
                 .anyRequest().authenticated()
             );

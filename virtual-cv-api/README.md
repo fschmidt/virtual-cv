@@ -44,7 +44,7 @@ SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 
 ### Endpoints
 
-Once running, the API is available at `http://localhost:8080`:
+Once running, the API is available at `http://localhost:9823`:
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -68,7 +68,7 @@ Once running, the API is available at `http://localhost:8080`:
 ./gradlew test
 
 # Test the API
-curl http://localhost:8080/api/cv | jq '.nodes | length'
+curl http://localhost:9823/api/cv | jq '.nodes | length'
 # Should return: 27
 ```
 
