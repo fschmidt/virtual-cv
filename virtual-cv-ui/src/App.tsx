@@ -13,8 +13,11 @@ import {
 import '@xyflow/react/dist/style.css';
 import './App.css';
 import GraphNode from './components/GraphNode';
-import { cvService, buildNodes, buildEdges, getAllContent } from './services';
+import ViewToggle, { type ViewMode } from './components/ViewToggle';
+import StandardCVView from './components/StandardCVView';
+import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap } from './services';
 import type { CVData } from './types';
+import { CV_SECTIONS } from './types';
 
 const nodeTypes = {
   graphNode: GraphNode,
@@ -42,6 +45,8 @@ function HomeButton({ onClick, visible }: { onClick: () => void; visible: boolea
 function Flow() {
   const [cvData, setCvData] = useState<CVData | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('graph');
+  const [contentMap, setContentMap] = useState<ContentMap>({});
   const [nodes, setNodes] = useNodesState(initialNodes);
   const [edges, setEdges] = useEdgesState(initialEdges);
   const { fitView } = useReactFlow();
@@ -51,10 +56,14 @@ function Flow() {
     cvService.getCVData().then(setCvData);
   }, []);
 
+  // Load content map on mount
+  useEffect(() => {
+    setContentMap(getAllContent());
+  }, []);
+
   // Rebuild graph when data or selection changes
   useEffect(() => {
-    if (cvData) {
-      const contentMap = getAllContent();
+    if (cvData && viewMode === 'graph') {
       setNodes(buildNodes(cvData, selectedId, contentMap));
       setEdges(buildEdges(cvData, selectedId));
 
@@ -63,7 +72,7 @@ function Flow() {
         fitView({ padding: 0.3, duration: ANIMATION_DURATION });
       }, 50);
     }
-  }, [cvData, selectedId, setNodes, setEdges, fitView]);
+  }, [cvData, selectedId, viewMode, contentMap, setNodes, setEdges, fitView]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -94,19 +103,24 @@ function Flow() {
 
   return (
     <div className="app">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        onNodeClick={onNodeClick}
-        onPaneClick={onPaneClick}
-        fitView
-        fitViewOptions={{ padding: 0.3, duration: ANIMATION_DURATION }}
-      >
-        <Controls />
-        <MiniMap />
-        <HomeButton onClick={onHomeClick} visible={selectedId !== null} />
-      </ReactFlow>
+      <ViewToggle view={viewMode} onChange={setViewMode} />
+      {viewMode === 'graph' ? (
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          onNodeClick={onNodeClick}
+          onPaneClick={onPaneClick}
+          fitView
+          fitViewOptions={{ padding: 0.3, duration: ANIMATION_DURATION }}
+        >
+          <Controls />
+          <MiniMap />
+          <HomeButton onClick={onHomeClick} visible={selectedId !== null} />
+        </ReactFlow>
+      ) : (
+        <StandardCVView cvData={cvData} contentMap={contentMap} sections={CV_SECTIONS} />
+      )}
     </div>
   );
 }

@@ -25,10 +25,10 @@ const profile: CVProfileNode = {
 
 // Categories
 const categories: CVCategoryNode[] = [
-  { id: 'work', type: 'category', parentId: 'profile', label: 'Work' },
-  { id: 'skills', type: 'category', parentId: 'profile', label: 'Skills' },
-  { id: 'education', type: 'category', parentId: 'profile', label: 'Education' },
-  { id: 'languages', type: 'category', parentId: 'profile', label: 'Languages' },
+  { id: 'work', type: 'category', parentId: 'profile', label: 'Work', sectionId: 'work' },
+  { id: 'skills', type: 'category', parentId: 'profile', label: 'Skills', sectionId: 'skills' },
+  { id: 'education', type: 'category', parentId: 'profile', label: 'Education', sectionId: 'education' },
+  { id: 'languages', type: 'category', parentId: 'profile', label: 'Languages', sectionId: 'languages' },
 ];
 
 // Work items

@@ -1,6 +1,25 @@
 // Node types in the CV graph
 export type CVNodeType = 'profile' | 'category' | 'item' | 'skill-group' | 'skill';
 
+// Section IDs for standard CV view
+export type CVSectionId = 'work' | 'skills' | 'education' | 'languages';
+
+// Section configuration for standard CV view
+export interface CVSection {
+  id: CVSectionId;
+  label: string;
+  icon: string;
+  order: number;
+}
+
+// Predefined sections with icons
+export const CV_SECTIONS: CVSection[] = [
+  { id: 'work', label: 'Work Experience', icon: 'briefcase', order: 1 },
+  { id: 'skills', label: 'Technical Skills', icon: 'code', order: 2 },
+  { id: 'education', label: 'Education', icon: 'graduation-cap', order: 3 },
+  { id: 'languages', label: 'Languages', icon: 'globe', order: 4 },
+];
+
 // Base interface for all CV nodes
 export interface CVNodeBase {
   id: string;
@@ -26,7 +45,7 @@ export interface CVProfileNode extends CVNodeBase {
 // Category nodes - top-level groupings
 export interface CVCategoryNode extends CVNodeBase {
   type: 'category';
-  icon?: string;
+  sectionId: CVSectionId;
 }
 
 // Work/Education items
