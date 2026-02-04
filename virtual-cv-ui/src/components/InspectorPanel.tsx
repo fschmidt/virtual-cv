@@ -9,6 +9,7 @@ interface InspectorPanelProps {
   cvData: CVData;
   contentMap: ContentMap;
   sections: CVSection[];
+  onClose: () => void;
 }
 
 // Type guards
@@ -50,7 +51,7 @@ function getSectionIcon(node: CVNode, nodes: CVNode[], sections: CVSection[]): s
   return null;
 }
 
-function InspectorPanel({ selectedId, cvData, contentMap, sections }: InspectorPanelProps) {
+function InspectorPanel({ selectedId, cvData, contentMap, sections, onClose }: InspectorPanelProps) {
   if (!selectedId) return null;
 
   const node = cvData.nodes.find((n) => n.id === selectedId);
@@ -60,10 +61,20 @@ function InspectorPanel({ selectedId, cvData, contentMap, sections }: InspectorP
   const parentChain = getParentChain(selectedId, cvData.nodes);
   const sectionIcon = getSectionIcon(node, cvData.nodes, sections);
 
+  // Close button (visible on mobile only via CSS)
+  const closeButton = (
+    <button className="inspector-close" onClick={onClose} title="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M18 6L6 18M6 6l12 12" />
+      </svg>
+    </button>
+  );
+
   // Profile node - special rendering
   if (isProfileNode(node)) {
     return (
       <div className="inspector-panel">
+        {closeButton}
         <div className="inspector-profile">
           <div className="inspector-profile-photo">
             <img src={node.photoUrl} alt={node.name} />
@@ -89,6 +100,7 @@ function InspectorPanel({ selectedId, cvData, contentMap, sections }: InspectorP
   // Other nodes
   return (
     <div className="inspector-panel">
+      {closeButton}
       {/* Breadcrumb */}
       <div className="inspector-breadcrumb">
         {parentChain.map((n, i) => (

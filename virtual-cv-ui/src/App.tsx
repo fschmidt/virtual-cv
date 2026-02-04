@@ -73,9 +73,15 @@ function Flow() {
       setEdges(buildEdges(cvData, selectedId));
 
       // Animate to fit view after state change
+      // First call: quick adjustment
       setTimeout(() => {
         fitView({ padding: 0.3, duration: ANIMATION_DURATION });
       }, 50);
+
+      // Second call: after CSS transition completes (300ms) to handle container resize
+      setTimeout(() => {
+        fitView({ padding: 0.3, duration: ANIMATION_DURATION });
+      }, 350);
     }
   }, [cvData, selectedId, viewMode, contentMap, setNodes, setEdges, fitView]);
 
@@ -145,6 +151,7 @@ function Flow() {
             cvData={cvData}
             contentMap={contentMap}
             sections={CV_SECTIONS}
+            onClose={onHomeClick}
           />
         </>
       ) : (
