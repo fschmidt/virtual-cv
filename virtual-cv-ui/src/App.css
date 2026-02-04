@@ -107,12 +107,10 @@
 }
 
 .graph-node.skill.detailed {
-  border-radius: 20px;
-  padding: 10px 20px;
-  font-size: 0.9rem;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 1rem;
   font-weight: 500;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
 }
 
 /* ===========================================
