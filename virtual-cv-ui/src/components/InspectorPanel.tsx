@@ -1,8 +1,11 @@
-import { memo } from 'react';
+import { memo, useRef, useCallback } from 'react';
 import Markdown from 'react-markdown';
 import SectionIcon from './SectionIcon';
 import type { CVNode, CVProfileNode, CVData, CVSection } from '../types';
 import type { ContentMap } from '../services';
+
+// Swipe threshold in pixels
+const SWIPE_THRESHOLD = 80;
 
 interface InspectorPanelProps {
   selectedId: string | null;
@@ -52,6 +55,33 @@ function getSectionIcon(node: CVNode, nodes: CVNode[], sections: CVSection[]): s
 }
 
 function InspectorPanel({ selectedId, cvData, contentMap, sections, onClose }: InspectorPanelProps) {
+  // Swipe to close tracking
+  const touchStartY = useRef<number | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    // Only track swipe if at the top of scroll
+    if (panelRef.current && panelRef.current.scrollTop <= 0) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+
+    // If swiping down past threshold, close the panel
+    if (deltaY > SWIPE_THRESHOLD) {
+      touchStartY.current = null;
+      onClose();
+    }
+  }, [onClose]);
+
+  const handleTouchEnd = useCallback(() => {
+    touchStartY.current = null;
+  }, []);
+
   if (!selectedId) return null;
 
   const node = cvData.nodes.find((n) => n.id === selectedId);
@@ -70,10 +100,18 @@ function InspectorPanel({ selectedId, cvData, contentMap, sections, onClose }: I
     </button>
   );
 
+  // Touch handlers for swipe-to-close
+  const touchHandlers = {
+    ref: panelRef,
+    onTouchStart: handleTouchStart,
+    onTouchMove: handleTouchMove,
+    onTouchEnd: handleTouchEnd,
+  };
+
   // Profile node - special rendering
   if (isProfileNode(node)) {
     return (
-      <div className="inspector-panel">
+      <div className="inspector-panel" {...touchHandlers}>
         {closeButton}
         <div className="inspector-profile">
           <div className="inspector-profile-photo">
@@ -99,7 +137,7 @@ function InspectorPanel({ selectedId, cvData, contentMap, sections, onClose }: I
 
   // Other nodes
   return (
-    <div className="inspector-panel">
+    <div className="inspector-panel" {...touchHandlers}>
       {closeButton}
       {/* Breadcrumb */}
       <div className="inspector-breadcrumb">

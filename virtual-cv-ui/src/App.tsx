@@ -16,6 +16,7 @@ import ViewToggle, { type ViewMode } from './components/ViewToggle';
 import StandardCVView from './components/StandardCVView';
 import SearchDialog from './components/SearchDialog';
 import InspectorPanel from './components/InspectorPanel';
+import LoadingSkeleton from './components/LoadingSkeleton';
 import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap } from './services';
 import type { CVData } from './types';
 import { CV_SECTIONS } from './types';
@@ -33,6 +34,28 @@ const ANIMATION_DURATION = 300;
 // Inspector mode: nodes stay as quickview, content shown in side panel
 const INSPECTOR_MODE = true;
 
+// URL hash helpers for deep linking
+function getNodeIdFromHash(): string | null {
+  const hash = window.location.hash;
+  if (hash.startsWith('#node=')) {
+    return decodeURIComponent(hash.slice(6)) || null;
+  }
+  return null;
+}
+
+function setHashFromNodeId(nodeId: string | null): void {
+  if (nodeId) {
+    const newHash = `#node=${encodeURIComponent(nodeId)}`;
+    if (window.location.hash !== newHash) {
+      window.history.pushState(null, '', newHash);
+    }
+  } else {
+    if (window.location.hash) {
+      window.history.pushState(null, '', window.location.pathname + window.location.search);
+    }
+  }
+}
+
 function HomeButton({ onClick, visible }: { onClick: () => void; visible: boolean }) {
   if (!visible) return null;
 
@@ -48,7 +71,7 @@ function HomeButton({ onClick, visible }: { onClick: () => void; visible: boolea
 
 function Flow() {
   const [cvData, setCvData] = useState<CVData | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => getNodeIdFromHash());
   const [viewMode, setViewMode] = useState<ViewMode>('graph');
   const [contentMap, setContentMap] = useState<ContentMap>({});
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -64,6 +87,21 @@ function Flow() {
   // Load content map on mount
   useEffect(() => {
     setContentMap(getAllContent());
+  }, []);
+
+  // Sync URL hash with selected node (deep linking)
+  useEffect(() => {
+    setHashFromNodeId(selectedId);
+  }, [selectedId]);
+
+  // Handle browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const nodeId = getNodeIdFromHash();
+      setSelectedId(nodeId);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   // Rebuild graph when data or selection changes
@@ -124,7 +162,11 @@ function Flow() {
   }, []);
 
   if (!cvData) {
-    return <div className="app loading">Loading...</div>;
+    return (
+      <div className="app loading">
+        <LoadingSkeleton />
+      </div>
+    );
   }
 
   return (

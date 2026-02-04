@@ -13,12 +13,13 @@ interface GraphNodeProps {
 }
 
 function GraphNode({ data }: GraphNodeProps) {
-  const { label, nodeType, state, content } = data;
+  const { label, nodeType, state, content, selected } = data;
+  const selectedClass = selected ? 'selected' : '';
 
-  // Dormant state - just a dot
+  // Dormant state - just a dot (can still be selected when navigating back)
   if (state === 'dormant') {
     return (
-      <div className="graph-node dormant">
+      <div className={`graph-node dormant ${selectedClass}`}>
         <Handle type="source" position={Position.Right} />
         <Handle type="target" position={Position.Left} />
       </div>
@@ -29,7 +30,7 @@ function GraphNode({ data }: GraphNodeProps) {
   if (nodeType === 'profile') {
     if (state === 'detailed') {
       return (
-        <div className="graph-node profile detailed">
+        <div className={`graph-node profile detailed ${selectedClass}`}>
           <div className="business-card">
             <div className="business-card-photo">
               <img src={data.photoUrl} alt={data.name} />
@@ -57,7 +58,7 @@ function GraphNode({ data }: GraphNodeProps) {
     }
     // Quickview - circular photo
     return (
-      <div className="graph-node profile quickview">
+      <div className={`graph-node profile quickview ${selectedClass}`}>
         <img src={data.photoUrl} alt={data.name} className="profile-photo" />
         <Handle type="source" position={Position.Right} />
         <Handle type="target" position={Position.Left} />
@@ -68,7 +69,7 @@ function GraphNode({ data }: GraphNodeProps) {
   // Category node with icon
   if (nodeType === 'category' && data.icon) {
     return (
-      <div className={`graph-node ${nodeType} ${state}`}>
+      <div className={`graph-node ${nodeType} ${state} ${selectedClass}`}>
         <SectionIcon icon={data.icon} size={state === 'detailed' ? 24 : 20} className="category-icon" />
         <span className="node-label">{label}</span>
         <Handle type="source" position={Position.Right} />
@@ -80,7 +81,7 @@ function GraphNode({ data }: GraphNodeProps) {
   // Detailed state with markdown content
   if (state === 'detailed' && content) {
     return (
-      <div className={`graph-node ${nodeType} ${state}`}>
+      <div className={`graph-node ${nodeType} ${state} ${selectedClass}`}>
         <div className="markdown-content">
           <Markdown>{content}</Markdown>
         </div>
@@ -92,7 +93,7 @@ function GraphNode({ data }: GraphNodeProps) {
 
   // Quickview and fallback for detailed without content
   return (
-    <div className={`graph-node ${nodeType} ${state}`}>
+    <div className={`graph-node ${nodeType} ${state} ${selectedClass}`}>
       <span className="node-label">{label}</span>
       <Handle type="source" position={Position.Right} />
       <Handle type="target" position={Position.Left} />

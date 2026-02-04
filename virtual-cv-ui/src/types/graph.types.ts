@@ -26,6 +26,8 @@ export interface GraphNodeData {
   content?: string;
   // Section icon for category nodes
   icon?: string;
+  // Whether this node is currently selected
+  selected?: boolean;
   // Index signature for React Flow compatibility
   [key: string]: unknown;
 }

@@ -17,6 +17,115 @@
 }
 
 /* ===========================================
+   LOADING SKELETON
+   =========================================== */
+.loading-skeleton {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.skeleton-profile {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  z-index: 2;
+}
+
+.skeleton-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #1a1a2e 25%, #252540 50%, #1a1a2e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-text {
+  border-radius: 4px;
+  background: linear-gradient(90deg, #1a1a2e 25%, #252540 50%, #1a1a2e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-name {
+  width: 120px;
+  height: 16px;
+}
+
+.skeleton-title {
+  width: 80px;
+  height: 12px;
+}
+
+.skeleton-nodes {
+  position: absolute;
+  width: 400px;
+  height: 300px;
+}
+
+.skeleton-node {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #1a1a2e 25%, #252540 50%, #1a1a2e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-left-top {
+  top: 10%;
+  left: 5%;
+  animation-delay: 0.1s;
+}
+
+.skeleton-right-top {
+  top: 10%;
+  right: 5%;
+  animation-delay: 0.2s;
+}
+
+.skeleton-left-bottom {
+  bottom: 10%;
+  left: 5%;
+  animation-delay: 0.3s;
+}
+
+.skeleton-right-bottom {
+  bottom: 10%;
+  right: 5%;
+  animation-delay: 0.4s;
+}
+
+.skeleton-lines {
+  position: absolute;
+  width: 400px;
+  height: 300px;
+  z-index: 1;
+}
+
+.skeleton-lines line {
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 2;
+  stroke-dasharray: 5 5;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ===========================================
    GRAPH NODE - Base
    =========================================== */
 .graph-node {
@@ -67,6 +176,20 @@
   border-color: rgba(102, 126, 234, 0.5);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
   transform: translate(-50%, -50%) scale(1.08);
+}
+
+/* Selected node highlight */
+.graph-node.selected {
+  border-color: rgba(167, 139, 250, 0.8) !important;
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.3), 0 8px 24px rgba(102, 126, 234, 0.4) !important;
+}
+
+.graph-node.quickview.selected {
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.graph-node.profile.quickview.selected .profile-photo {
+  border-color: rgba(167, 139, 250, 0.6);
 }
 
 .graph-node.skill.quickview,

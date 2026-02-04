@@ -129,12 +129,16 @@ export function buildNodes(
     const position = positionMap.get(node.id) ?? { x: 0, y: 0 };
     // Don't pass content to nodes in inspector mode (shown in panel instead)
     const content = inspectorMode ? undefined : contentMap?.[node.id];
+    const isSelected = node.id === selectedId;
 
     return {
       id: node.id,
       type: 'graphNode',
       position,
-      data: mapNodeToGraphData(node, state, content),
+      data: {
+        ...mapNodeToGraphData(node, state, content),
+        selected: isSelected,
+      },
     };
   });
 }
