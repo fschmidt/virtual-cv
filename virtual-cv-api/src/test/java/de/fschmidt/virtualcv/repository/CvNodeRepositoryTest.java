@@ -2,6 +2,7 @@ package de.fschmidt.virtualcv.repository;
 
 import de.fschmidt.virtualcv.domain.CvNode;
 import de.fschmidt.virtualcv.domain.CvNode.NodeType;
+import de.fschmidt.virtualcv.dto.CvNodeDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -71,21 +72,24 @@ class CvNodeRepositoryTest {
     }
 
     @Test
-    void shouldDeleteNode() {
+    void shouldSoftDeleteNode() {
         // Given
         CvNode node = new CvNode("to-delete", NodeType.SKILL, "Java");
         repository.save(node);
+        assertThat(repository.findActiveById("to-delete")).isPresent();
+
+        // When - soft delete
+        node.setDeleted(true);
+        repository.save(node);
+
+        // Then - not found in active queries
+        assertThat(repository.findActiveById("to-delete")).isEmpty();
+        // But still exists in database
         assertThat(repository.findById("to-delete")).isPresent();
-
-        // When
-        repository.deleteById("to-delete");
-
-        // Then
-        assertThat(repository.findById("to-delete")).isEmpty();
     }
 
     @Test
-    void shouldSearchNodes() {
+    void shouldSearchActiveNodes() {
         // Given
         CvNode node1 = new CvNode("skill-java", NodeType.SKILL, "Java Programming");
         node1.setDescription("Backend development with Java");
@@ -95,29 +99,56 @@ class CvNodeRepositoryTest {
         node2.setDescription("Frontend framework");
         repository.save(node2);
 
-        // When
-        List<CvNode> results = repository.search("java");
+        CvNode deletedNode = new CvNode("skill-deleted", NodeType.SKILL, "Java Legacy");
+        deletedNode.setDeleted(true);
+        repository.save(deletedNode);
 
-        // Then
+        // When
+        List<CvNodeDto> results = repository.searchActive("java");
+
+        // Then - should only find non-deleted node
         assertThat(results).hasSize(1);
-        assertThat(results.get(0).getId()).isEqualTo("skill-java");
+        assertThat(results.get(0).id()).isEqualTo("skill-java");
     }
 
     @Test
-    void shouldFindRootNodes() {
+    void shouldFindAllActiveNodes() {
         // Given
-        CvNode root = new CvNode("profile", NodeType.PROFILE, "Profile");
-        repository.save(root);
+        CvNode active = new CvNode("active", NodeType.PROFILE, "Active Node");
+        repository.save(active);
 
-        CvNode child = new CvNode("work", NodeType.CATEGORY, "Work");
-        child.setParent(root);
-        repository.save(child);
+        CvNode deleted = new CvNode("deleted", NodeType.PROFILE, "Deleted Node");
+        deleted.setDeleted(true);
+        repository.save(deleted);
 
         // When
-        List<CvNode> roots = repository.findByParentIsNull();
+        List<CvNodeDto> results = repository.findAllActive();
 
         // Then
-        assertThat(roots).hasSize(1);
-        assertThat(roots.get(0).getId()).isEqualTo("profile");
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).id()).isEqualTo("active");
+    }
+
+    @Test
+    void shouldFindActiveChildren() {
+        // Given
+        CvNode parent = new CvNode("profile", NodeType.PROFILE, "Profile");
+        repository.save(parent);
+
+        CvNode activeChild = new CvNode("work", NodeType.CATEGORY, "Work");
+        activeChild.setParent(parent);
+        repository.save(activeChild);
+
+        CvNode deletedChild = new CvNode("deleted-cat", NodeType.CATEGORY, "Deleted");
+        deletedChild.setParent(parent);
+        deletedChild.setDeleted(true);
+        repository.save(deletedChild);
+
+        // When
+        List<CvNodeDto> children = repository.findActiveByParentId("profile");
+
+        // Then
+        assertThat(children).hasSize(1);
+        assertThat(children.get(0).id()).isEqualTo("work");
     }
 }

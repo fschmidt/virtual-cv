@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.Instant;
 import java.util.Map;
 
 @Entity
@@ -18,7 +19,7 @@ public class CvNode {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 20, updatable = false)
     private NodeType type;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -42,6 +43,15 @@ public class CvNode {
     @Column(name = "position_y")
     private Integer positionY;
 
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
     public CvNode() {
     }
 
@@ -49,6 +59,17 @@ public class CvNode {
         this.id = id;
         this.type = type;
         this.label = label;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = Instant.now();
+        updatedAt = Instant.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = Instant.now();
     }
 
     // Getters and setters
@@ -115,6 +136,22 @@ public class CvNode {
 
     public void setPositionY(Integer positionY) {
         this.positionY = positionY;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
     }
 
     public enum NodeType {
