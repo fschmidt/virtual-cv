@@ -8,7 +8,7 @@ Zoomable CV Graph - an interactive, graph-based CV website that serves as both a
 
 ## Current State
 
-**Phase 1 (UI Prototype) - In Progress**
+**Phase 1 (UI Prototype) - Near Complete**
 
 The frontend prototype is functional with:
 - Interactive mind-map style graph using React Flow
@@ -16,6 +16,9 @@ The frontend prototype is functional with:
 - Business card profile node with photo
 - Dark theme with purple accent colors
 - Deployed to GitHub Pages via GitHub Actions
+- **Clean data architecture** with virtual API service pattern
+- **Markdown content rendering** in detailed views
+- **Real CV data** extracted from actual resume
 
 **Live URL:** https://fschmidt.github.io/virtual-cv/
 
@@ -26,8 +29,19 @@ virtual-cv/
 ├── virtual-cv-ui/          # React + Vite + TypeScript frontend
 │   └── src/
 │       ├── components/
-│       │   └── GraphNode.tsx   # Single unified node component
-│       ├── App.tsx             # Main app with graph data & logic
+│       │   └── GraphNode.tsx   # Unified node component with markdown
+│       ├── types/              # TypeScript interfaces
+│       │   ├── cv.types.ts     # Domain model (CVNode, CVProfileNode, etc.)
+│       │   └── graph.types.ts  # UI types (NodeState, GraphNodeData)
+│       ├── data/
+│       │   └── cv-content.ts   # CV structure data (nodes, positions)
+│       ├── content/
+│       │   └── cv-content.md   # Markdown content by node ID
+│       ├── services/
+│       │   ├── cv.service.ts   # Virtual API service
+│       │   ├── cv.mapper.ts    # Data → React Flow transformation
+│       │   └── content.service.ts  # Markdown parser
+│       ├── App.tsx             # Main app (simplified)
 │       └── App.css             # All styling
 ├── virtual-cv-api/         # Java Spring Boot backend (future)
 ├── docs/                   # Project documentation
@@ -69,18 +83,30 @@ All nodes use a single `GraphNode` component with three states:
 - `skill-group` - Skill categories (Frontend, Backend, DevOps)
 - `skill` - Individual skills (React, Java, Docker)
 
-### Graph Data Structure
+### Data Architecture
 
-Nodes defined in `App.tsx` with:
+**Domain types** (`types/cv.types.ts`):
 ```typescript
-interface NodeData {
+type CVNodeType = 'profile' | 'category' | 'item' | 'skill-group' | 'skill';
+
+interface CVNodeBase {
   id: string;
+  type: CVNodeType;
+  parentId: string | null;
   label: string;
-  parentId: string | null;  // Defines hierarchy
-  position: { x: number; y: number };
-  nodeType: NodeType;
 }
+// Extended by: CVProfileNode, CVItemNode, CVSkillNode, etc.
 ```
+
+**Content** (`content/cv-content.md`):
+- Markdown file with sections delimited by `# node-id`
+- Parsed at build time into per-node content map
+- Rendered with react-markdown in detailed views
+
+**Service pattern** (`services/`):
+- `cvService.getCVData()` - returns all CV data (mock API)
+- `buildNodes()` / `buildEdges()` - transform to React Flow format
+- `getAllContent()` - returns parsed markdown by node ID
 
 Edges auto-generated from parent-child relationships.
 
@@ -141,11 +167,22 @@ Edges auto-generated from parent-child relationships.
    - Consolidated CSS with consistent class naming
    - Removed redundant component files
 
+### Recently Completed
+
+6. **Data Architecture Refactor**
+   - Separated data into `types/`, `data/`, `services/`, `content/` folders
+   - Created virtual API service pattern (ready for real backend)
+   - Extracted real CV data from PDF
+
+7. **Markdown Content**
+   - Added react-markdown for rich content rendering
+   - Content stored in single `cv-content.md` file
+   - Detailed views now show formatted markdown (headings, lists, code)
+
 ### Pending / Next Steps
 
 - [ ] Add smooth animations/transitions when expanding nodes
-- [ ] Implement inspector panel for detailed content
 - [ ] Add search functionality (Cmd+K)
 - [ ] Add home/reset navigation button
 - [ ] Consider auto-layout algorithm for node positioning
-- [ ] Backend API (Phase 2)
+- [ ] Backend API (Phase 2) - service pattern is ready
