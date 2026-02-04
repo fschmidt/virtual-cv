@@ -93,15 +93,23 @@ function getAncestorIds(nodeId: string, nodes: CVNode[]): string[] {
 }
 
 // Compute node state based on selection
-function computeNodeState(nodeId: string, selectedId: string | null, nodes: CVNode[]): NodeState {
+// When inspectorMode is true, selected nodes stay as quickview
+function computeNodeState(
+  nodeId: string,
+  selectedId: string | null,
+  nodes: CVNode[],
+  inspectorMode: boolean = false
+): NodeState {
   if (!selectedId) {
-    if (nodeId === 'profile') return 'detailed';
+    if (nodeId === 'profile') return inspectorMode ? 'quickview' : 'detailed';
     const node = nodes.find((n) => n.id === nodeId);
     if (node?.parentId === 'profile') return 'quickview';
     return 'dormant';
   }
 
-  if (nodeId === selectedId) return 'detailed';
+  if (nodeId === selectedId) {
+    return inspectorMode ? 'quickview' : 'detailed';
+  }
 
   const node = nodes.find((n) => n.id === nodeId);
   if (node?.parentId === selectedId) return 'quickview';
@@ -135,7 +143,8 @@ function jitter(nodeId: string, scale: number = 20): number {
  */
 export function computeLayout(
   nodes: CVNode[],
-  selectedId: string | null
+  selectedId: string | null,
+  inspectorMode: boolean = false
 ): NodePosition[] {
   const positions: NodePosition[] = [];
   const childrenMap = buildChildrenMap(nodes);
@@ -143,7 +152,7 @@ export function computeLayout(
   // Pre-compute all node states
   const nodeStates = new Map<string, NodeState>();
   for (const node of nodes) {
-    nodeStates.set(node.id, computeNodeState(node.id, selectedId, nodes));
+    nodeStates.set(node.id, computeNodeState(node.id, selectedId, nodes, inspectorMode));
   }
 
   const profile = nodes.find((n) => n.type === 'profile');

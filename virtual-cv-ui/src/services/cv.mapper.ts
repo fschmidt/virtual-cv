@@ -23,19 +23,24 @@ function getAncestorIds(nodeId: string, nodes: CVNode[]): string[] {
 }
 
 // Compute node state based on selection
+// When inspectorMode is true, selected nodes stay as quickview (content shown in panel)
 export function computeNodeState(
   nodeId: string,
   selectedId: string | null,
-  nodes: CVNode[]
+  nodes: CVNode[],
+  inspectorMode: boolean = false
 ): NodeState {
   if (!selectedId) {
-    if (nodeId === 'profile') return 'detailed';
+    if (nodeId === 'profile') return inspectorMode ? 'quickview' : 'detailed';
     const node = nodes.find((n) => n.id === nodeId);
     if (node?.parentId === 'profile') return 'quickview';
     return 'dormant';
   }
 
-  if (nodeId === selectedId) return 'detailed';
+  if (nodeId === selectedId) {
+    // In inspector mode, selected nodes stay as quickview
+    return inspectorMode ? 'quickview' : 'detailed';
+  }
 
   const node = nodes.find((n) => n.id === nodeId);
   if (node?.parentId === selectedId) return 'quickview';
@@ -109,19 +114,21 @@ export function buildNodes(
   cvData: CVData,
   selectedId: string | null,
   contentMap?: ContentMap,
-  useAutoLayout: boolean = true
+  useAutoLayout: boolean = true,
+  inspectorMode: boolean = false
 ): Node<GraphNodeData>[] {
   // Use auto-layout or static positions
   const positions = useAutoLayout
-    ? computeLayout(cvData.nodes, selectedId)
+    ? computeLayout(cvData.nodes, selectedId, inspectorMode)
     : cvData.positions;
 
   const positionMap = new Map(positions.map((p) => [p.nodeId, { x: p.x, y: p.y }]));
 
   return cvData.nodes.map((node) => {
-    const state = computeNodeState(node.id, selectedId, cvData.nodes);
+    const state = computeNodeState(node.id, selectedId, cvData.nodes, inspectorMode);
     const position = positionMap.get(node.id) ?? { x: 0, y: 0 };
-    const content = contentMap?.[node.id];
+    // Don't pass content to nodes in inspector mode (shown in panel instead)
+    const content = inspectorMode ? undefined : contentMap?.[node.id];
 
     return {
       id: node.id,

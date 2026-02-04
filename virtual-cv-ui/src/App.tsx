@@ -3,7 +3,6 @@ import {
   ReactFlow,
   ReactFlowProvider,
   Controls,
-  MiniMap,
   useNodesState,
   useEdgesState,
   useReactFlow,
@@ -16,6 +15,7 @@ import GraphNode from './components/GraphNode';
 import ViewToggle, { type ViewMode } from './components/ViewToggle';
 import StandardCVView from './components/StandardCVView';
 import SearchDialog from './components/SearchDialog';
+import InspectorPanel from './components/InspectorPanel';
 import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap } from './services';
 import type { CVData } from './types';
 import { CV_SECTIONS } from './types';
@@ -29,6 +29,9 @@ const initialEdges: Edge[] = [];
 
 // Animation duration in ms
 const ANIMATION_DURATION = 300;
+
+// Inspector mode: nodes stay as quickview, content shown in side panel
+const INSPECTOR_MODE = true;
 
 function HomeButton({ onClick, visible }: { onClick: () => void; visible: boolean }) {
   if (!visible) return null;
@@ -66,7 +69,7 @@ function Flow() {
   // Rebuild graph when data or selection changes
   useEffect(() => {
     if (cvData && viewMode === 'graph') {
-      setNodes(buildNodes(cvData, selectedId, contentMap));
+      setNodes(buildNodes(cvData, selectedId, contentMap, true, INSPECTOR_MODE));
       setEdges(buildEdges(cvData, selectedId));
 
       // Animate to fit view after state change
@@ -119,22 +122,31 @@ function Flow() {
   }
 
   return (
-    <div className="app">
+    <div className={`app ${selectedId && viewMode === 'graph' ? 'panel-open' : ''}`}>
       <ViewToggle view={viewMode} onChange={setViewMode} />
       {viewMode === 'graph' ? (
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          onNodeClick={onNodeClick}
-          onPaneClick={onPaneClick}
-          fitView
-          fitViewOptions={{ padding: 0.3, duration: ANIMATION_DURATION }}
-        >
-          <Controls />
-          <MiniMap />
-          <HomeButton onClick={onHomeClick} visible={selectedId !== null} />
-        </ReactFlow>
+        <>
+          <div className="graph-container">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={nodeTypes}
+              onNodeClick={onNodeClick}
+              onPaneClick={onPaneClick}
+              fitView
+              fitViewOptions={{ padding: 0.3, duration: ANIMATION_DURATION }}
+            >
+              <Controls />
+              <HomeButton onClick={onHomeClick} visible={selectedId !== null} />
+            </ReactFlow>
+          </div>
+          <InspectorPanel
+            selectedId={selectedId}
+            cvData={cvData}
+            contentMap={contentMap}
+            sections={CV_SECTIONS}
+          />
+        </>
       ) : (
         <StandardCVView cvData={cvData} contentMap={contentMap} sections={CV_SECTIONS} />
       )}
