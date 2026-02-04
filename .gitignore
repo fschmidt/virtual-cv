@@ -1,6 +1,12 @@
 # OS
 .DS_Store
 
+# Secrets - do not commit
+kubeconfig
+
+# Claude Code
+.claude/
+
 # Compiled class file
 *.class
 
