@@ -2,6 +2,7 @@ import type { Node, Edge } from '@xyflow/react';
 import type { CVData, CVNode, CVProfileNode, CVCategoryNode, NodeState, GraphNodeData } from '../types';
 import { CV_SECTIONS } from '../types';
 import type { ContentMap } from './content.service';
+import { computeLayout } from './layout.service';
 
 // Get all ancestor IDs for a given node
 function getAncestorIds(nodeId: string, nodes: CVNode[]): string[] {
@@ -107,9 +108,15 @@ function mapNodeToGraphData(
 export function buildNodes(
   cvData: CVData,
   selectedId: string | null,
-  contentMap?: ContentMap
+  contentMap?: ContentMap,
+  useAutoLayout: boolean = true
 ): Node<GraphNodeData>[] {
-  const positionMap = new Map(cvData.positions.map((p) => [p.nodeId, { x: p.x, y: p.y }]));
+  // Use auto-layout or static positions
+  const positions = useAutoLayout
+    ? computeLayout(cvData.nodes, selectedId)
+    : cvData.positions;
+
+  const positionMap = new Map(positions.map((p) => [p.nodeId, { x: p.x, y: p.y }]));
 
   return cvData.nodes.map((node) => {
     const state = computeNodeState(node.id, selectedId, cvData.nodes);
