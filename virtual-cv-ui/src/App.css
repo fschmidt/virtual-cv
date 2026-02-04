@@ -1,181 +1,206 @@
 .app {
   width: 100vw;
   height: 100vh;
+  background: #0d0d14;
 }
 
 /* ===========================================
-   STATE: DETAILED (selected node)
+   GRAPH NODE - Base
    =========================================== */
-.node-detailed {
-  transition: all 0.3s ease;
-}
-
-.node-detailed.node-type-profile {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  padding: 20px 32px;
-  font-size: 1.2rem;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
-}
-
-.node-detailed.node-type-category {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  padding: 16px 28px;
-  font-size: 1.1rem;
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
-}
-
-.node-detailed.node-type-item {
-  background: #ffffff;
-  border: 2px solid #667eea;
-  border-radius: 8px;
-  padding: 14px 22px;
-  font-weight: 500;
-  font-size: 1rem;
-  white-space: pre-line;
-  text-align: center;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
-}
-
-.node-detailed.node-type-skill-group {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 14px 24px;
-  font-weight: 600;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
-}
-
-.node-detailed.node-type-skill {
-  background: #ffffff;
-  border: 2px solid #6366f1;
-  border-radius: 20px;
-  padding: 10px 18px;
-  font-size: 0.95rem;
-  color: #4338ca;
-  font-weight: 500;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
-}
-
-/* ===========================================
-   STATE: QUICKVIEW (children of selected + path to root)
-   =========================================== */
-.node-quickview {
+.graph-node {
   transition: all 0.3s ease;
   cursor: pointer;
-  border-radius: 50% !important;
-  aspect-ratio: 1;
+}
+
+/* ===========================================
+   DORMANT STATE - Small dot
+   =========================================== */
+.graph-node.dormant {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.graph-node.dormant:hover {
+  background: rgba(102, 126, 234, 0.5);
+  border-color: rgba(102, 126, 234, 0.8);
+  transform: scale(1.5);
+  box-shadow: 0 0 12px rgba(102, 126, 234, 0.4);
+}
+
+/* ===========================================
+   QUICKVIEW STATE - Circular previews
+   =========================================== */
+.graph-node.quickview {
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-}
-
-.node-quickview.node-type-profile {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.7rem;
   font-weight: 500;
-  padding: 20px;
-  font-size: 0.9rem;
-  opacity: 0.9;
-  min-width: 80px;
-  min-height: 80px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.node-quickview.node-type-category {
-  background: #ffffff;
-  border: 2px solid #e2e8f0;
-  padding: 16px;
-  font-weight: 500;
-  font-size: 0.85rem;
-  min-width: 70px;
-  min-height: 70px;
+.graph-node.quickview:hover {
+  border-color: rgba(102, 126, 234, 0.5);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  transform: scale(1.08);
 }
 
-.node-quickview.node-type-category:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+.graph-node.skill.quickview,
+.graph-node.skill-group.quickview {
+  border-color: rgba(102, 126, 234, 0.3);
 }
 
-.node-quickview.node-type-item {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  padding: 14px;
-  font-size: 0.75rem;
-  white-space: pre-line;
-  min-width: 60px;
-  min-height: 60px;
+.graph-node.profile.quickview {
+  padding: 0.5rem;
 }
 
-.node-quickview.node-type-item:hover {
-  border-color: #667eea;
-  background: #ffffff;
-}
-
-.node-quickview.node-type-skill-group {
-  background: #eef2ff;
-  border: 2px solid #c7d2fe;
-  padding: 14px;
-  font-weight: 500;
-  color: #4338ca;
-  font-size: 0.8rem;
-  min-width: 60px;
-  min-height: 60px;
-}
-
-.node-quickview.node-type-skill-group:hover {
-  border-color: #818cf8;
-  background: #e0e7ff;
-}
-
-.node-quickview.node-type-skill {
-  background: #ffffff;
-  border: 1px solid #e0e7ff;
-  padding: 12px;
-  font-size: 0.75rem;
-  color: #4338ca;
-  min-width: 50px;
-  min-height: 50px;
-}
-
-.node-quickview.node-type-skill:hover {
-  background: #eef2ff;
-  border-color: #a5b4fc;
+.graph-node.profile.quickview .profile-photo {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 /* ===========================================
-   STATE: DORMANT (hidden/minimized)
+   DETAILED STATE - Full content
    =========================================== */
-.node-dormant {
-  width: 12px !important;
-  height: 12px !important;
-  min-width: 12px !important;
-  min-height: 12px !important;
-  padding: 0 !important;
-  border-radius: 50% !important;
-  background: #cbd5e1 !important;
-  border: 2px solid #94a3b8 !important;
-  transition: all 0.3s ease;
-  cursor: pointer;
+.graph-node.detailed {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
 }
 
-.node-dormant:hover {
-  background: #a5b4fc !important;
-  border-color: #6366f1 !important;
-  transform: scale(1.3);
+.graph-node.category.detailed {
+  border-radius: 12px;
+  padding: 18px 28px;
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
-.node-dormant .react-flow__handle {
-  opacity: 0;
+.graph-node.item.detailed {
+  border-radius: 10px;
+  padding: 16px 24px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: pre-line;
+  text-align: center;
+}
+
+.graph-node.skill-group.detailed {
+  border-radius: 10px;
+  padding: 16px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+.graph-node.skill.detailed {
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+/* ===========================================
+   PROFILE NODE - Business Card
+   =========================================== */
+.graph-node.profile.detailed {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.business-card {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 320px;
+  max-width: 360px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  color: white;
+}
+
+.business-card-photo img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.business-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.business-card-name {
+  margin: 0 0 4px 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.business-card-title {
+  margin: 0 0 2px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.business-card-subtitle {
+  margin: 0 0 12px 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.business-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.business-card-experience {
+  color: #a78bfa;
+  font-weight: 500;
+}
+
+.business-card-location::before {
+  content: '📍 ';
+}
+
+.business-card-email::before {
+  content: '✉️ ';
+}
+
+/* ===========================================
+   NODE LABEL
+   =========================================== */
+.node-label {
+  white-space: pre-line;
+  line-height: 1.2;
 }
 
 /* ===========================================
@@ -186,19 +211,18 @@
 }
 
 .edge-active .react-flow__edge-path {
-  stroke: #667eea;
+  stroke: rgba(102, 126, 234, 0.6);
   stroke-width: 2;
 }
 
 .edge-partial .react-flow__edge-path {
-  stroke: #94a3b8;
+  stroke: rgba(255, 255, 255, 0.25);
   stroke-width: 1.5;
 }
 
 .edge-dormant .react-flow__edge-path {
-  stroke: #e2e8f0;
+  stroke: rgba(255, 255, 255, 0.08);
   stroke-width: 1;
-  opacity: 0.4;
 }
 
 /* ===========================================
@@ -208,7 +232,6 @@
   transition: all 0.3s ease;
 }
 
-/* Hide handles and position at center */
 .react-flow__handle {
   opacity: 0;
   width: 1px;
@@ -217,7 +240,6 @@
   min-height: 1px;
   border: none;
   background: transparent;
-  /* Position handles at center of node */
   top: 50% !important;
   left: 50% !important;
   right: auto !important;
@@ -225,7 +247,6 @@
   transform: translate(-50%, -50%) !important;
 }
 
-/* Edges render behind nodes */
 .react-flow__edges {
   z-index: 0 !important;
 }
@@ -234,12 +255,34 @@
   z-index: 1 !important;
 }
 
+.react-flow__background {
+  display: none !important;
+}
+
 .react-flow__minimap {
   border-radius: 8px;
   overflow: hidden;
+  background: rgba(26, 26, 46, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.react-flow__minimap-mask {
+  fill: rgba(102, 126, 234, 0.15) !important;
 }
 
 .react-flow__controls {
   border-radius: 8px;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.react-flow__controls-button {
+  background: rgba(26, 26, 46, 0.95) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  fill: rgba(255, 255, 255, 0.7) !important;
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(102, 126, 234, 0.3) !important;
+  fill: white !important;
 }
