@@ -17,8 +17,9 @@ import SearchDialog from './components/SearchDialog';
 import InspectorPanel from './components/InspectorPanel';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import FeatureTogglePopup from './components/FeatureTogglePopup';
-import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap, type UpdateNodeCommand } from './services';
-import type { CVData } from './types';
+import { ToastProvider, useToast } from './components/Toast';
+import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap, type UpdateNodeCommand, type CreateNodeCommand } from './services';
+import type { CVData, CVNodeType } from './types';
 import { CV_SECTIONS } from './types';
 import { Feature, isFeatureEnabled } from './utils/feature-flags';
 
@@ -83,6 +84,9 @@ function Flow() {
 
   // Feature flags
   const editModeEnabled = useMemo(() => isFeatureEnabled(Feature.EDIT_MODE), []);
+
+  // Toast notifications
+  const { showToast, showError } = useToast();
 
   // Load data on mount (mimics API call)
   useEffect(() => {
@@ -176,13 +180,50 @@ function Flow() {
 
   // Handle saving node edits
   const onSaveNode = useCallback(async (id: string, updates: UpdateNodeCommand, _content?: string) => {
-    await cvService.updateNode(id, updates);
-    // Refresh data after save
-    const newData = await cvService.getCVData();
-    setCvData(newData);
-    // Refresh content map (content is already updated via setNodeContent in InspectorPanel)
-    setContentMap(getAllContent());
-  }, []);
+    try {
+      await cvService.updateNode(id, updates);
+      // Refresh data after save
+      const newData = await cvService.getCVData();
+      setCvData(newData);
+      // Refresh content map (content is already updated via setNodeContent in InspectorPanel)
+      setContentMap(getAllContent());
+      showToast('Changes saved', 'success');
+    } catch (error) {
+      showError(error);
+      throw error; // Re-throw so InspectorPanel can also handle it
+    }
+  }, [showToast, showError]);
+
+  // Handle deleting a node
+  const onDeleteNode = useCallback(async (id: string) => {
+    try {
+      await cvService.deleteNode(id);
+      // Refresh data after delete
+      const newData = await cvService.getCVData();
+      setCvData(newData);
+      setSelectedId(null); // Deselect the deleted node
+      showToast('Node deleted', 'success');
+    } catch (error) {
+      showError(error);
+      throw error; // Re-throw so InspectorPanel can also handle it
+    }
+  }, [showToast, showError]);
+
+  // Handle creating a new node
+  const onCreateNode = useCallback(async (type: CVNodeType, data: CreateNodeCommand) => {
+    try {
+      const newNode = await cvService.createNode(type, data);
+      // Refresh data after create
+      const newData = await cvService.getCVData();
+      setCvData(newData);
+      // Select the newly created node
+      setSelectedId(newNode.id);
+      showToast('Node created', 'success');
+    } catch (error) {
+      showError(error);
+      throw error; // Re-throw so CreateNodeDialog can also handle it
+    }
+  }, [showToast, showError]);
 
   if (!cvData) {
     return (
@@ -218,6 +259,8 @@ function Flow() {
             onClose={onHomeClick}
             editModeEnabled={editModeEnabled}
             onSave={onSaveNode}
+            onDelete={onDeleteNode}
+            onCreate={onCreateNode}
           />
         </>
       ) : (
@@ -241,9 +284,11 @@ function Flow() {
 
 function App() {
   return (
-    <ReactFlowProvider>
-      <Flow />
-    </ReactFlowProvider>
+    <ToastProvider>
+      <ReactFlowProvider>
+        <Flow />
+      </ReactFlowProvider>
+    </ToastProvider>
   );
 }
 
