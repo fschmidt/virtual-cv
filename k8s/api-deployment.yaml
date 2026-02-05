@@ -80,12 +80,19 @@ metadata:
   name: virtual-cv-api
   namespace: virtual-cv
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
+  tls:
+    - hosts:
+        - api.fschmidts.net
+      secretName: api-tls-cert
   rules:
-    - http:
+    - host: api.fschmidts.net
+      http:
         paths:
-          - path: /api
+          - path: /
             pathType: Prefix
             backend:
               service:

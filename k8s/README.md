@@ -44,6 +44,9 @@ kube-cv apply -f https://github.com/cert-manager/cert-manager/releases/download/
 
 # Wait for pods to be ready
 kube-cv wait --for=condition=ready pod -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=120s
+
+# Apply ClusterIssuer for Let's Encrypt
+kube-cv apply -f k8s/cert-issuer.yaml
 ```
 
 ### 2. Add KUBECONFIG to GitHub Secrets
@@ -69,11 +72,14 @@ kube-cv get all -n virtual-cv
 
 ## API Access
 
-API is exposed via Traefik Ingress:
+API is exposed via Traefik Ingress with TLS (Let's Encrypt):
 
 ```
-http://46.225.79.87/api/cv
+https://api.fschmidts.net/api/cv
+https://api.fschmidts.net/api/health
 ```
+
+DNS: A record `api.fschmidts.net` → `46.225.79.87`
 
 ## Connect to PostgreSQL
 
