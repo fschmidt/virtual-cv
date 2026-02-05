@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect, useMemo } from 'react';
+import { useCallback, useState, useEffect, useMemo, useRef } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -17,8 +17,10 @@ import SearchDialog from './components/SearchDialog';
 import InspectorPanel from './components/InspectorPanel';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import FeatureTogglePopup from './components/FeatureTogglePopup';
-import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap, type UpdateNodeCommand } from './services';
-import type { CVData } from './types';
+import CreateNodeDialog from './components/CreateNodeDialog';
+import { ToastProvider, useToast } from './components/Toast';
+import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap, type UpdateNodeCommand, type CreateNodeCommand } from './services';
+import type { CVData, CVNodeType } from './types';
 import { CV_SECTIONS } from './types';
 import { Feature, isFeatureEnabled } from './utils/feature-flags';
 
@@ -77,12 +79,45 @@ function Flow() {
   const [contentMap, setContentMap] = useState<ContentMap>({});
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFeaturePopupOpen, setIsFeaturePopupOpen] = useState(false);
-  const [nodes, setNodes] = useNodesState(initialNodes);
-  const [edges, setEdges] = useEdgesState(initialEdges);
+  const [editMode, setEditMode] = useState(false);
+  const [createDialogParentId, setCreateDialogParentId] = useState<string | null>(null);
+  const [nodes, setNodes, defaultOnNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Custom onNodesChange that filters out position changes during drag for performance
+  const onNodesChange = useCallback(
+    (changes: Parameters<typeof defaultOnNodesChange>[0]) => {
+      if (isDraggingRef.current) {
+        // During drag, only apply position changes (let React Flow handle internally)
+        // Skip all other processing
+        const positionChanges = changes.filter((c) => c.type === 'position');
+        if (positionChanges.length > 0) {
+          defaultOnNodesChange(positionChanges);
+        }
+        return;
+      }
+      defaultOnNodesChange(changes);
+    },
+    [defaultOnNodesChange]
+  );
   const { fitView } = useReactFlow();
 
-  // Feature flags
-  const editModeEnabled = useMemo(() => isFeatureEnabled(Feature.EDIT_MODE), []);
+  // Ref to track current node positions for edit mode (avoids stale state in useEffect)
+  const nodePositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const isDraggingRef = useRef(false);
+
+  // Keep position ref in sync with nodes state (but not during drag to avoid overhead)
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      nodePositionsRef.current = new Map(nodes.map((n) => [n.id, n.position]));
+    }
+  }, [nodes]);
+
+  // Feature flags - controls visibility of edit toggle button
+  const showEditToggle = useMemo(() => isFeatureEnabled(Feature.EDIT_MODE), []);
+
+  // Toast notifications
+  const { showToast, showError } = useToast();
 
   // Load data on mount (mimics API call)
   useEffect(() => {
@@ -109,24 +144,38 @@ function Flow() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Handle adding a child node - opens create dialog directly
+  const onAddChild = useCallback((parentId: string) => {
+    setCreateDialogParentId(parentId);
+  }, []);
+
   // Rebuild graph when data or selection changes
+  // In edit mode, preserve current positions to allow dragging
   useEffect(() => {
     if (cvData && viewMode === 'graph') {
-      setNodes(buildNodes(cvData, selectedId, contentMap, true, INSPECTOR_MODE));
-      setEdges(buildEdges(cvData, selectedId));
+      // Always preserve existing positions from ref to avoid resetting dragged nodes
+      const existingPositions = nodePositionsRef.current.size > 0
+        ? nodePositionsRef.current
+        : undefined;
 
-      // Animate to fit view after state change
-      // First call: quick adjustment
-      setTimeout(() => {
-        fitView({ padding: 0.3, duration: ANIMATION_DURATION });
-      }, 50);
+      setNodes(buildNodes(cvData, selectedId, contentMap, INSPECTOR_MODE, editMode, onAddChild, existingPositions));
+      setEdges(buildEdges(cvData, selectedId, editMode));
 
-      // Second call: after CSS transition completes (300ms) to handle container resize
-      setTimeout(() => {
-        fitView({ padding: 0.3, duration: ANIMATION_DURATION });
-      }, 350);
+      // Only fit view when not in edit mode (to avoid disrupting drag positions)
+      if (!editMode) {
+        // Animate to fit view after state change
+        // First call: quick adjustment
+        setTimeout(() => {
+          fitView({ padding: 0.3, duration: ANIMATION_DURATION });
+        }, 50);
+
+        // Second call: after CSS transition completes (300ms) to handle container resize
+        setTimeout(() => {
+          fitView({ padding: 0.3, duration: ANIMATION_DURATION });
+        }, 350);
+      }
     }
-  }, [cvData, selectedId, viewMode, contentMap, setNodes, setEdges, fitView]);
+  }, [cvData, selectedId, viewMode, contentMap, setNodes, setEdges, fitView, editMode, onAddChild]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -142,9 +191,11 @@ function Flow() {
         e.preventDefault();
         setIsSearchOpen(true);
       }
-      // Escape to close search, feature popup, or deselect node
+      // Escape to close dialogs or deselect node
       if (e.key === 'Escape') {
-        if (isFeaturePopupOpen) {
+        if (createDialogParentId) {
+          setCreateDialogParentId(null);
+        } else if (isFeaturePopupOpen) {
           setIsFeaturePopupOpen(false);
         } else if (isSearchOpen) {
           setIsSearchOpen(false);
@@ -155,7 +206,7 @@ function Flow() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSearchOpen, isFeaturePopupOpen]);
+  }, [isSearchOpen, isFeaturePopupOpen, createDialogParentId]);
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedId((current) => (current === node.id ? null : node.id));
@@ -176,13 +227,94 @@ function Flow() {
 
   // Handle saving node edits
   const onSaveNode = useCallback(async (id: string, updates: UpdateNodeCommand, _content?: string) => {
-    await cvService.updateNode(id, updates);
-    // Refresh data after save
-    const newData = await cvService.getCVData();
-    setCvData(newData);
-    // Refresh content map (content is already updated via setNodeContent in InspectorPanel)
-    setContentMap(getAllContent());
+    try {
+      await cvService.updateNode(id, updates);
+      // Refresh data after save
+      const newData = await cvService.getCVData();
+      setCvData(newData);
+      // Refresh content map (content is already updated via setNodeContent in InspectorPanel)
+      setContentMap(getAllContent());
+      showToast('Changes saved', 'success');
+    } catch (error) {
+      showError(error);
+      throw error; // Re-throw so InspectorPanel can also handle it
+    }
+  }, [showToast, showError]);
+
+  // Handle deleting a node
+  const onDeleteNode = useCallback(async (id: string) => {
+    try {
+      await cvService.deleteNode(id);
+      // Refresh data after delete
+      const newData = await cvService.getCVData();
+      setCvData(newData);
+      setSelectedId(null); // Deselect the deleted node
+      showToast('Node deleted', 'success');
+    } catch (error) {
+      showError(error);
+      throw error; // Re-throw so InspectorPanel can also handle it
+    }
+  }, [showToast, showError]);
+
+  // Handle creating a new node
+  const onCreateNode = useCallback(async (type: CVNodeType, data: CreateNodeCommand) => {
+    try {
+      const newNode = await cvService.createNode(type, data);
+      // Refresh data after create
+      const newData = await cvService.getCVData();
+      setCvData(newData);
+      // Select the newly created node
+      setSelectedId(newNode.id);
+      showToast('Node created', 'success');
+    } catch (error) {
+      showError(error);
+      throw error; // Re-throw so CreateNodeDialog can also handle it
+    }
+  }, [showToast, showError]);
+
+  // Handle publishing/unpublishing a node
+  const onPublishNode = useCallback(async (id: string, publish: boolean) => {
+    try {
+      await cvService.updateNode(id, {
+        attributes: { isDraft: !publish } as unknown as UpdateNodeCommand['attributes'],
+      });
+      // Refresh data after publish
+      const newData = await cvService.getCVData();
+      setCvData(newData);
+      showToast(publish ? 'Node published' : 'Node unpublished', 'success');
+    } catch (error) {
+      showError(error);
+      throw error; // Re-throw so InspectorPanel can also handle it
+    }
+  }, [showToast, showError]);
+
+  // Handle node drag start - disable position sync during drag for performance
+  const onNodeDragStart = useCallback(() => {
+    isDraggingRef.current = true;
   }, []);
+
+  // Handle node drag end - persist position to backend
+  const onNodeDragStop = useCallback(
+    async (_event: React.MouseEvent, node: Node) => {
+      isDraggingRef.current = false;
+      // Sync positions after drag ends
+      nodePositionsRef.current = new Map(nodes.map((n) => [n.id, n.position]));
+
+      if (!editMode) return;
+
+      try {
+        await cvService.updateNode(node.id, {
+          positionX: Math.round(node.position.x),
+          positionY: Math.round(node.position.y),
+        });
+        // Don't refresh all data - just update the local position
+        // The position is already updated in the local state by React Flow
+      } catch (error) {
+        showError(error);
+      }
+    },
+    [editMode, showError, nodes]
+  );
 
   if (!cvData) {
     return (
@@ -194,7 +326,13 @@ function Flow() {
 
   return (
     <div className={`app ${selectedId && viewMode === 'graph' ? 'panel-open' : ''}`}>
-      <ViewToggle view={viewMode} onChange={setViewMode} />
+      <ViewToggle
+        view={viewMode}
+        onChange={setViewMode}
+        showEditToggle={showEditToggle}
+        editMode={editMode}
+        onEditModeChange={setEditMode}
+      />
       {viewMode === 'graph' ? (
         <>
           <div className="graph-container">
@@ -202,8 +340,14 @@ function Flow() {
               nodes={nodes}
               edges={edges}
               nodeTypes={nodeTypes}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
               onNodeClick={onNodeClick}
               onPaneClick={onPaneClick}
+              onNodeDragStart={onNodeDragStart}
+              onNodeDragStop={onNodeDragStop}
+              nodesDraggable={editMode}
+              selectNodesOnDrag={false}
               fitView
               fitViewOptions={{ padding: 0.3, duration: ANIMATION_DURATION }}
             >
@@ -216,8 +360,11 @@ function Flow() {
             contentMap={contentMap}
             sections={CV_SECTIONS}
             onClose={onHomeClick}
-            editModeEnabled={editModeEnabled}
+            editModeEnabled={editMode}
             onSave={onSaveNode}
+            onDelete={onDeleteNode}
+            onCreate={onCreateNode}
+            onPublish={onPublishNode}
           />
         </>
       ) : (
@@ -235,15 +382,26 @@ function Flow() {
         isOpen={isFeaturePopupOpen}
         onClose={() => setIsFeaturePopupOpen(false)}
       />
+      {/* Create node dialog triggered from graph + button */}
+      {createDialogParentId && cvData.nodes.find((n) => n.id === createDialogParentId) && (
+        <CreateNodeDialog
+          isOpen={true}
+          parentNode={cvData.nodes.find((n) => n.id === createDialogParentId)!}
+          onClose={() => setCreateDialogParentId(null)}
+          onCreate={onCreateNode}
+        />
+      )}
     </div>
   );
 }
 
 function App() {
   return (
-    <ReactFlowProvider>
-      <Flow />
-    </ReactFlowProvider>
+    <ToastProvider>
+      <ReactFlowProvider>
+        <Flow />
+      </ReactFlowProvider>
+    </ToastProvider>
   );
 }
 

@@ -192,6 +192,84 @@
   border-color: rgba(167, 139, 250, 0.6);
 }
 
+/* ===========================================
+   DRAFT STATE - Visual indicator for unpublished nodes
+   =========================================== */
+.graph-node.draft {
+  opacity: 0.85;
+  border-style: dashed !important;
+}
+
+.graph-node.draft::after {
+  content: 'DRAFT';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  background: #f59e0b;
+  color: white;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 10;
+}
+
+.graph-node.quickview.draft::after,
+.graph-node.dormant.draft::after {
+  top: -6px;
+  right: -6px;
+  font-size: 0.45rem;
+  padding: 1px 4px;
+}
+
+.graph-node.quickview.draft,
+.graph-node.dormant.draft {
+  border-color: rgba(245, 158, 11, 0.6) !important;
+}
+
+/* ===========================================
+   EDIT MODE - Draggable nodes and add button
+   =========================================== */
+.graph-node.edit-mode {
+  cursor: grab;
+  transition: none; /* Disable transition for instant drag response */
+}
+
+.graph-node.edit-mode:active {
+  cursor: grabbing;
+}
+
+/* Add child button - appears on quickview nodes in edit mode */
+.add-child-btn {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #667eea;
+  border: 2px solid #0d0d14;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 20;
+  padding: 0;
+}
+
+.add-child-btn:hover {
+  background: #5a6fd6;
+  transform: scale(1.15);
+}
+
+.add-child-btn:active {
+  transform: scale(1.05);
+}
+
 .graph-node.skill.quickview,
 .graph-node.skill-group.quickview {
   border-color: rgba(102, 126, 234, 0.3);
@@ -623,6 +701,13 @@
   justify-content: center;
   gap: 8px;
   transition: all 0.2s ease;
+  outline: none;
+}
+
+.floating-menu-btn:focus,
+.floating-menu-btn:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .floating-menu-btn:hover {
@@ -637,6 +722,23 @@
 
 .floating-menu-btn span {
   display: none;
+}
+
+.floating-menu-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 6px 4px;
+}
+
+.floating-menu-btn.edit-toggle.active {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.2);
+}
+
+.floating-menu-btn.edit-toggle:hover {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
 }
 
 /* ===========================================
@@ -1415,29 +1517,89 @@
 /* ===========================================
    INSPECTOR PANEL - Edit Mode
    =========================================== */
-.inspector-edit-btn {
+.inspector-action-buttons {
   position: absolute;
   top: 16px;
   right: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+
+.inspector-edit-btn,
+.inspector-delete-btn {
   width: 36px;
   height: 36px;
   padding: 0;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(102, 126, 234, 0.2);
-  color: #a78bfa;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  z-index: 5;
+}
+
+.inspector-edit-btn {
+  background: rgba(102, 126, 234, 0.2);
+  color: #a78bfa;
 }
 
 .inspector-edit-btn:hover {
   background: rgba(102, 126, 234, 0.4);
   color: white;
   border-color: rgba(102, 126, 234, 0.5);
+}
+
+.inspector-delete-btn {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.inspector-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: white;
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.inspector-publish-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.inspector-publish-btn.draft {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.inspector-publish-btn.draft:hover {
+  background: rgba(245, 158, 11, 0.4);
+  color: white;
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.inspector-publish-btn.published {
+  background: rgba(52, 211, 153, 0.2);
+  color: #34d399;
+}
+
+.inspector-publish-btn.published:hover {
+  background: rgba(52, 211, 153, 0.4);
+  color: white;
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+.inspector-publish-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .inspector-edit-form {
@@ -1717,6 +1879,7 @@
     cursor: pointer;
     backdrop-filter: blur(8px);
     transition: all 0.2s ease;
+    outline: none;
   }
 
   .floating-menu-toggle:hover {
@@ -1750,6 +1913,12 @@
     display: inline;
     font-size: 0.9rem;
     font-weight: 500;
+  }
+
+  .floating-menu-divider {
+    width: 100%;
+    height: 1px;
+    margin: 4px 0;
   }
 
   @keyframes slideDown {
@@ -1843,4 +2012,420 @@
   .cv-section-header {
     font-size: 1rem;
   }
+}
+
+/* ===========================================
+   TOAST NOTIFICATIONS
+   =========================================== */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  font-size: 0.9rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: slideInToast 0.3s ease;
+  max-width: 360px;
+  pointer-events: auto;
+}
+
+.toast-success {
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+.toast-success svg:first-child {
+  color: #34d399;
+}
+
+.toast-error {
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.toast-error svg:first-child {
+  color: #f87171;
+}
+
+.toast-info svg:first-child {
+  color: #667eea;
+}
+
+.toast-message {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.toast-close:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes slideInToast {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .toast-container {
+    left: 20px;
+    right: 20px;
+    bottom: 80px; /* Above mobile controls */
+  }
+
+  .toast {
+    max-width: none;
+  }
+}
+
+/* ===========================================
+   DELETE CONFIRMATION DIALOG
+   =========================================== */
+.delete-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  animation: fadeIn 0.15s ease;
+}
+
+.delete-confirm-dialog {
+  width: 100%;
+  max-width: 400px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.delete-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.delete-confirm-header h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.delete-confirm-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.delete-confirm-close:hover:not(:disabled) {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.delete-confirm-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.delete-confirm-message {
+  padding: 20px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.delete-confirm-message strong {
+  color: white;
+}
+
+.delete-confirm-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 20px 20px;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.85rem;
+}
+
+.delete-confirm-warning svg {
+  flex-shrink: 0;
+  color: #f87171;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.delete-cancel-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.delete-cancel-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.delete-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.delete-confirm-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.delete-confirm-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.delete-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===========================================
+   CREATE NODE DIALOG
+   =========================================== */
+.create-node-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  animation: fadeIn 0.15s ease;
+}
+
+.create-node-dialog {
+  width: 100%;
+  max-width: 450px;
+  max-height: 80vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.2s ease;
+}
+
+.create-node-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.create-node-header h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.create-node-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.create-node-close:hover:not(:disabled) {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.create-node-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.create-node-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.create-node-type-selector {
+  margin-bottom: 20px;
+}
+
+.type-selector-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 8px;
+}
+
+.type-selector-options {
+  display: flex;
+  gap: 8px;
+}
+
+.type-option {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.type-option:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.type-option.active {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.5);
+  color: #a78bfa;
+}
+
+.type-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.create-node-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+/* Add Child Button in Inspector */
+.inspector-add-child-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  margin-top: 20px;
+  border: 1px dashed rgba(102, 126, 234, 0.4);
+  border-radius: 8px;
+  background: rgba(102, 126, 234, 0.1);
+  color: #a78bfa;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.inspector-add-child-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.6);
+  color: white;
 }

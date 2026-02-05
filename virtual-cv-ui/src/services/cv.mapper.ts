@@ -2,7 +2,6 @@ import type { Node, Edge } from '@xyflow/react';
 import type { CVData, CVNode, CVProfileNode, CVCategoryNode, NodeState, GraphNodeData } from '../types';
 import { CV_SECTIONS } from '../types';
 import type { ContentMap } from './content.service';
-import { computeLayout } from './layout.service';
 
 // Get all ancestor IDs for a given node
 function getAncestorIds(nodeId: string, nodes: CVNode[]): string[] {
@@ -72,6 +71,7 @@ function mapNodeToGraphData(
     nodeType: node.type,
     state,
     content,
+    isDraft: node.isDraft,
   };
 
   if (isProfileNode(node)) {
@@ -114,19 +114,48 @@ export function buildNodes(
   cvData: CVData,
   selectedId: string | null,
   contentMap?: ContentMap,
-  useAutoLayout: boolean = true,
-  inspectorMode: boolean = false
+  inspectorMode: boolean = false,
+  editModeEnabled: boolean = false,
+  onAddChild?: (parentId: string) => void,
+  existingPositions?: Map<string, { x: number; y: number }>
 ): Node<GraphNodeData>[] {
-  // Use auto-layout or static positions
-  const positions = useAutoLayout
-    ? computeLayout(cvData.nodes, selectedId, inspectorMode)
-    : cvData.positions;
+  // Filter out draft nodes when not in edit mode
+  const visibleNodes = cvData.nodes.filter(
+    (node) => !node.isDraft || editModeEnabled
+  );
 
-  const positionMap = new Map(positions.map((p) => [p.nodeId, { x: p.x, y: p.y }]));
+  // Use saved positions from backend
+  const savedPositionMap = new Map(cvData.positions.map((p) => [p.nodeId, { x: p.x, y: p.y }]));
 
-  return cvData.nodes.map((node) => {
-    const state = computeNodeState(node.id, selectedId, cvData.nodes, inspectorMode);
-    const position = positionMap.get(node.id) ?? { x: 0, y: 0 };
+  // Get position: prefer existing (dragged) positions in edit mode, then saved, then near parent
+  const getPosition = (node: CVNode): { x: number; y: number } => {
+    // In edit mode, preserve existing positions from current graph state (for dragging)
+    if (existingPositions) {
+      const existingPos = existingPositions.get(node.id);
+      if (existingPos) {
+        return existingPos;
+      }
+    }
+    // Use saved position from backend
+    const savedPosition = savedPositionMap.get(node.id);
+    if (savedPosition) {
+      return savedPosition;
+    }
+    // New node - place it near its parent with a small offset
+    if (node.parentId) {
+      const parentPosition = existingPositions?.get(node.parentId) ?? savedPositionMap.get(node.parentId);
+      if (parentPosition) {
+        // Offset to the right and slightly down from parent
+        return { x: parentPosition.x + 200, y: parentPosition.y + 50 };
+      }
+    }
+    // Fallback to origin
+    return { x: 0, y: 0 };
+  };
+
+  return visibleNodes.map((node) => {
+    const state = computeNodeState(node.id, selectedId, visibleNodes, inspectorMode);
+    const position = getPosition(node);
     // Don't pass content to nodes in inspector mode (shown in panel instead)
     const content = inspectorMode ? undefined : contentMap?.[node.id];
     const isSelected = node.id === selectedId;
@@ -135,22 +164,36 @@ export function buildNodes(
       id: node.id,
       type: 'graphNode',
       position,
+      draggable: editModeEnabled,
       data: {
         ...mapNodeToGraphData(node, state, content),
         selected: isSelected,
+        editMode: editModeEnabled,
+        onAddChild,
       },
     };
   });
 }
 
 // Generate edges from parent-child relationships
-export function buildEdges(cvData: CVData, selectedId: string | null): Edge[] {
+export function buildEdges(
+  cvData: CVData,
+  selectedId: string | null,
+  editModeEnabled: boolean = false
+): Edge[] {
   const edges: Edge[] = [];
 
-  for (const node of cvData.nodes) {
-    if (node.parentId) {
-      const sourceState = computeNodeState(node.parentId, selectedId, cvData.nodes);
-      const targetState = computeNodeState(node.id, selectedId, cvData.nodes);
+  // Filter out draft nodes when not in edit mode
+  const visibleNodes = cvData.nodes.filter(
+    (node) => !node.isDraft || editModeEnabled
+  );
+  const visibleNodeIds = new Set(visibleNodes.map((n) => n.id));
+
+  for (const node of visibleNodes) {
+    // Only create edge if parent is also visible
+    if (node.parentId && visibleNodeIds.has(node.parentId)) {
+      const sourceState = computeNodeState(node.parentId, selectedId, visibleNodes);
+      const targetState = computeNodeState(node.id, selectedId, visibleNodes);
 
       const bothVisible = sourceState !== 'dormant' && targetState !== 'dormant';
       const oneVisible = sourceState !== 'dormant' || targetState !== 'dormant';

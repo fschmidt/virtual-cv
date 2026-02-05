@@ -28,23 +28,23 @@ public class CvNodeService {
 
     @Transactional(readOnly = true)
     public CvDataDto getAllNodes() {
-        List<CvNodeDto> nodes = repository.findAllActive();
+        List<CvNodeDto> nodes = repository.findAllAsDto();
         return new CvDataDto(nodes);
     }
 
     @Transactional(readOnly = true)
     public Optional<CvNodeDto> getNode(String id) {
-        return repository.findActiveById(id);
+        return repository.findByIdAsDto(id);
     }
 
     @Transactional(readOnly = true)
     public List<CvNodeDto> getChildren(String parentId) {
-        return repository.findActiveByParentId(parentId);
+        return repository.findByParentIdAsDto(parentId);
     }
 
     @Transactional(readOnly = true)
     public List<CvNodeDto> search(String query) {
-        return repository.searchActive(query);
+        return repository.search(query);
     }
 
     // Commands
@@ -109,7 +109,6 @@ public class CvNodeService {
 
     public Optional<CvNodeDto> update(UpdateNodeCommand command) {
         return repository.findById(command.id())
-                .filter(node -> !node.isDeleted())
                 .map(node -> {
                     if (command.label() != null) {
                         node.setLabel(command.label());
@@ -118,7 +117,12 @@ public class CvNodeService {
                         node.setDescription(command.description());
                     }
                     if (command.attributes() != null) {
-                        node.setAttributes(command.attributes());
+                        // Merge new attributes with existing (don't replace)
+                        Map<String, Object> merged = new HashMap<>(
+                            node.getAttributes() != null ? node.getAttributes() : Map.of()
+                        );
+                        merged.putAll(command.attributes());
+                        node.setAttributes(merged);
                     }
                     if (command.positionX() != null) {
                         node.setPositionX(command.positionX());
@@ -134,15 +138,31 @@ public class CvNodeService {
                 });
     }
 
+    /**
+     * Hard delete a node and all its descendants.
+     * @param id The node ID to delete
+     * @return true if node was found and deleted, false if not found
+     */
     public boolean delete(String id) {
         return repository.findById(id)
-                .filter(node -> !node.isDeleted())
                 .map(node -> {
-                    node.setDeleted(true);
-                    repository.save(node);
+                    deleteRecursively(node);
                     return true;
                 })
                 .orElse(false);
+    }
+
+    /**
+     * Recursively delete a node and all its children.
+     */
+    private void deleteRecursively(CvNode node) {
+        // First, delete all children recursively
+        List<CvNode> children = repository.findByParentId(node.getId());
+        for (CvNode child : children) {
+            deleteRecursively(child);
+        }
+        // Then delete the node itself
+        repository.delete(node);
     }
 
     private CvNodeDto toDto(CvNode node) {

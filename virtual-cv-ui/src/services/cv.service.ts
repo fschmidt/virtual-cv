@@ -10,7 +10,25 @@ import type {
   CVSectionId,
   NodePosition,
 } from '../types';
-import { getAllNodes, search, updateNode as apiUpdateNode, CvNodeDtoType } from '../api/generated';
+import {
+  getAllNodes,
+  search,
+  updateNode as apiUpdateNode,
+  deleteNode as apiDeleteNode,
+  createCategory as apiCreateCategory,
+  createItem as apiCreateItem,
+  createSkillGroup as apiCreateSkillGroup,
+  createSkill as apiCreateSkill,
+  createProfile as apiCreateProfile,
+  CvNodeDtoType,
+} from '../api/generated';
+import type {
+  CreateCategoryCommand,
+  CreateItemCommand,
+  CreateSkillGroupCommand,
+  CreateSkillCommand,
+  CreateProfileCommand,
+} from '../api/generated';
 import type { CvNodeDto, UpdateNodeCommand } from '../api/generated';
 
 // Map API node type to frontend node type
@@ -40,6 +58,7 @@ function mapApiNodeToFrontend(dto: CvNodeDto): CVNode {
     parentId: dto.parentId ?? null,
     label: dto.label ?? '',
     description: dto.description,
+    isDraft: attr<boolean>(attributes, 'isDraft') ?? false,
   };
 
   switch (type) {
@@ -106,6 +125,14 @@ function mapApiResponse(nodes: CvNodeDto[]): CVData {
   return { nodes: cvNodes, positions };
 }
 
+// Union type for create commands
+export type CreateNodeCommand =
+  | CreateCategoryCommand
+  | CreateItemCommand
+  | CreateSkillGroupCommand
+  | CreateSkillCommand
+  | CreateProfileCommand;
+
 // Service interface
 export interface CVService {
   getCVData(): Promise<CVData>;
@@ -113,6 +140,8 @@ export interface CVService {
   getChildren(parentId: string): Promise<CVNode[]>;
   searchNodes(query: string): Promise<CVNode[]>;
   updateNode(id: string, updates: UpdateNodeCommand): Promise<CVNode>;
+  deleteNode(id: string): Promise<void>;
+  createNode(type: CVNodeType, data: CreateNodeCommand): Promise<CVNode>;
   clearCache(): void;
 }
 
@@ -153,6 +182,34 @@ class ApiCVService implements CVService {
     // Backend requires id in request body to match path variable
     const response = await apiUpdateNode(id, { ...updates, id });
     this.clearCache(); // Invalidate cache after update
+    return mapApiNodeToFrontend(response.data);
+  }
+
+  async deleteNode(id: string): Promise<void> {
+    await apiDeleteNode(id);
+    this.clearCache();
+  }
+
+  async createNode(type: CVNodeType, data: CreateNodeCommand): Promise<CVNode> {
+    let response;
+    switch (type) {
+      case 'category':
+        response = await apiCreateCategory(data as CreateCategoryCommand);
+        break;
+      case 'item':
+        response = await apiCreateItem(data as CreateItemCommand);
+        break;
+      case 'skill-group':
+        response = await apiCreateSkillGroup(data as CreateSkillGroupCommand);
+        break;
+      case 'skill':
+        response = await apiCreateSkill(data as CreateSkillCommand);
+        break;
+      case 'profile':
+        response = await apiCreateProfile(data as CreateProfileCommand);
+        break;
+    }
+    this.clearCache();
     return mapApiNodeToFrontend(response.data);
   }
 

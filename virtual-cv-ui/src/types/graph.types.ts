@@ -28,6 +28,12 @@ export interface GraphNodeData {
   icon?: string;
   // Whether this node is currently selected
   selected?: boolean;
+  // Whether this node is a draft (only visible in edit mode)
+  isDraft?: boolean;
+  // Edit mode - enables dragging and add child button
+  editMode?: boolean;
+  // Callback to add a child node (used in edit mode)
+  onAddChild?: (parentId: string) => void;
   // Index signature for React Flow compatibility
   [key: string]: unknown;
 }
