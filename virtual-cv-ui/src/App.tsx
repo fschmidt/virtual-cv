@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect, useMemo } from 'react';
+import { useCallback, useState, useEffect, useMemo, useRef } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -81,9 +81,37 @@ function Flow() {
   const [isFeaturePopupOpen, setIsFeaturePopupOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [createDialogParentId, setCreateDialogParentId] = useState<string | null>(null);
-  const [nodes, setNodes] = useNodesState(initialNodes);
-  const [edges, setEdges] = useEdgesState(initialEdges);
+  const [nodes, setNodes, defaultOnNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Custom onNodesChange that filters out position changes during drag for performance
+  const onNodesChange = useCallback(
+    (changes: Parameters<typeof defaultOnNodesChange>[0]) => {
+      if (isDraggingRef.current) {
+        // During drag, only apply position changes (let React Flow handle internally)
+        // Skip all other processing
+        const positionChanges = changes.filter((c) => c.type === 'position');
+        if (positionChanges.length > 0) {
+          defaultOnNodesChange(positionChanges);
+        }
+        return;
+      }
+      defaultOnNodesChange(changes);
+    },
+    [defaultOnNodesChange]
+  );
   const { fitView } = useReactFlow();
+
+  // Ref to track current node positions for edit mode (avoids stale state in useEffect)
+  const nodePositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const isDraggingRef = useRef(false);
+
+  // Keep position ref in sync with nodes state (but not during drag to avoid overhead)
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      nodePositionsRef.current = new Map(nodes.map((n) => [n.id, n.position]));
+    }
+  }, [nodes]);
 
   // Feature flags - controls visibility of edit toggle button
   const showEditToggle = useMemo(() => isFeatureEnabled(Feature.EDIT_MODE), []);
@@ -122,21 +150,30 @@ function Flow() {
   }, []);
 
   // Rebuild graph when data or selection changes
+  // In edit mode, preserve current positions to allow dragging
   useEffect(() => {
     if (cvData && viewMode === 'graph') {
-      setNodes(buildNodes(cvData, selectedId, contentMap, true, INSPECTOR_MODE, editMode, onAddChild));
+      // Always preserve existing positions from ref to avoid resetting dragged nodes
+      const existingPositions = nodePositionsRef.current.size > 0
+        ? nodePositionsRef.current
+        : undefined;
+
+      setNodes(buildNodes(cvData, selectedId, contentMap, INSPECTOR_MODE, editMode, onAddChild, existingPositions));
       setEdges(buildEdges(cvData, selectedId, editMode));
 
-      // Animate to fit view after state change
-      // First call: quick adjustment
-      setTimeout(() => {
-        fitView({ padding: 0.3, duration: ANIMATION_DURATION });
-      }, 50);
+      // Only fit view when not in edit mode (to avoid disrupting drag positions)
+      if (!editMode) {
+        // Animate to fit view after state change
+        // First call: quick adjustment
+        setTimeout(() => {
+          fitView({ padding: 0.3, duration: ANIMATION_DURATION });
+        }, 50);
 
-      // Second call: after CSS transition completes (300ms) to handle container resize
-      setTimeout(() => {
-        fitView({ padding: 0.3, duration: ANIMATION_DURATION });
-      }, 350);
+        // Second call: after CSS transition completes (300ms) to handle container resize
+        setTimeout(() => {
+          fitView({ padding: 0.3, duration: ANIMATION_DURATION });
+        }, 350);
+      }
     }
   }, [cvData, selectedId, viewMode, contentMap, setNodes, setEdges, fitView, editMode, onAddChild]);
 
@@ -251,9 +288,18 @@ function Flow() {
     }
   }, [showToast, showError]);
 
+  // Handle node drag start - disable position sync during drag for performance
+  const onNodeDragStart = useCallback(() => {
+    isDraggingRef.current = true;
+  }, []);
+
   // Handle node drag end - persist position to backend
   const onNodeDragStop = useCallback(
     async (_event: React.MouseEvent, node: Node) => {
+      isDraggingRef.current = false;
+      // Sync positions after drag ends
+      nodePositionsRef.current = new Map(nodes.map((n) => [n.id, n.position]));
+
       if (!editMode) return;
 
       try {
@@ -267,7 +313,7 @@ function Flow() {
         showError(error);
       }
     },
-    [editMode, showError]
+    [editMode, showError, nodes]
   );
 
   if (!cvData) {
@@ -294,10 +340,14 @@ function Flow() {
               nodes={nodes}
               edges={edges}
               nodeTypes={nodeTypes}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
               onNodeClick={onNodeClick}
               onPaneClick={onPaneClick}
+              onNodeDragStart={onNodeDragStart}
               onNodeDragStop={onNodeDragStop}
               nodesDraggable={editMode}
+              selectNodesOnDrag={false}
               fitView
               fitViewOptions={{ padding: 0.3, duration: ANIMATION_DURATION }}
             >

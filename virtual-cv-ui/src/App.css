@@ -234,6 +234,7 @@
    =========================================== */
 .graph-node.edit-mode {
   cursor: grab;
+  transition: none; /* Disable transition for instant drag response */
 }
 
 .graph-node.edit-mode:active {

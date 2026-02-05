@@ -2,7 +2,6 @@ import type { Node, Edge } from '@xyflow/react';
 import type { CVData, CVNode, CVProfileNode, CVCategoryNode, NodeState, GraphNodeData } from '../types';
 import { CV_SECTIONS } from '../types';
 import type { ContentMap } from './content.service';
-import { computeLayout } from './layout.service';
 
 // Get all ancestor IDs for a given node
 function getAncestorIds(nodeId: string, nodes: CVNode[]): string[] {
@@ -115,26 +114,48 @@ export function buildNodes(
   cvData: CVData,
   selectedId: string | null,
   contentMap?: ContentMap,
-  useAutoLayout: boolean = true,
   inspectorMode: boolean = false,
   editModeEnabled: boolean = false,
-  onAddChild?: (parentId: string) => void
+  onAddChild?: (parentId: string) => void,
+  existingPositions?: Map<string, { x: number; y: number }>
 ): Node<GraphNodeData>[] {
   // Filter out draft nodes when not in edit mode
   const visibleNodes = cvData.nodes.filter(
     (node) => !node.isDraft || editModeEnabled
   );
 
-  // Use auto-layout or static positions (using visible nodes for layout)
-  const positions = useAutoLayout
-    ? computeLayout(visibleNodes, selectedId, inspectorMode)
-    : cvData.positions;
+  // Use saved positions from backend
+  const savedPositionMap = new Map(cvData.positions.map((p) => [p.nodeId, { x: p.x, y: p.y }]));
 
-  const positionMap = new Map(positions.map((p) => [p.nodeId, { x: p.x, y: p.y }]));
+  // Get position: prefer existing (dragged) positions in edit mode, then saved, then near parent
+  const getPosition = (node: CVNode): { x: number; y: number } => {
+    // In edit mode, preserve existing positions from current graph state (for dragging)
+    if (existingPositions) {
+      const existingPos = existingPositions.get(node.id);
+      if (existingPos) {
+        return existingPos;
+      }
+    }
+    // Use saved position from backend
+    const savedPosition = savedPositionMap.get(node.id);
+    if (savedPosition) {
+      return savedPosition;
+    }
+    // New node - place it near its parent with a small offset
+    if (node.parentId) {
+      const parentPosition = existingPositions?.get(node.parentId) ?? savedPositionMap.get(node.parentId);
+      if (parentPosition) {
+        // Offset to the right and slightly down from parent
+        return { x: parentPosition.x + 200, y: parentPosition.y + 50 };
+      }
+    }
+    // Fallback to origin
+    return { x: 0, y: 0 };
+  };
 
   return visibleNodes.map((node) => {
     const state = computeNodeState(node.id, selectedId, visibleNodes, inspectorMode);
-    const position = positionMap.get(node.id) ?? { x: 0, y: 0 };
+    const position = getPosition(node);
     // Don't pass content to nodes in inspector mode (shown in panel instead)
     const content = inspectorMode ? undefined : contentMap?.[node.id];
     const isSelected = node.id === selectedId;

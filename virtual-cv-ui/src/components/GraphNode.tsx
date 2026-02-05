@@ -130,4 +130,23 @@ function GraphNode({ id, data }: GraphNodeProps) {
   );
 }
 
-export default memo(GraphNode);
+// Custom comparison to prevent re-renders during drag
+// Only re-render if visual properties change, not function references
+function arePropsEqual(prev: GraphNodeProps, next: GraphNodeProps): boolean {
+  return (
+    prev.id === next.id &&
+    prev.data.label === next.data.label &&
+    prev.data.nodeType === next.data.nodeType &&
+    prev.data.state === next.data.state &&
+    prev.data.content === next.data.content &&
+    prev.data.selected === next.data.selected &&
+    prev.data.isDraft === next.data.isDraft &&
+    prev.data.editMode === next.data.editMode &&
+    prev.data.icon === next.data.icon &&
+    prev.data.name === next.data.name &&
+    prev.data.title === next.data.title &&
+    prev.data.photoUrl === next.data.photoUrl
+  );
+}
+
+export default memo(GraphNode, arePropsEqual);
