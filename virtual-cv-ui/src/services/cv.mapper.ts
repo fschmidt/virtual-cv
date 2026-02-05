@@ -117,7 +117,8 @@ export function buildNodes(
   contentMap?: ContentMap,
   useAutoLayout: boolean = true,
   inspectorMode: boolean = false,
-  editModeEnabled: boolean = false
+  editModeEnabled: boolean = false,
+  onAddChild?: (parentId: string) => void
 ): Node<GraphNodeData>[] {
   // Filter out draft nodes when not in edit mode
   const visibleNodes = cvData.nodes.filter(
@@ -142,9 +143,12 @@ export function buildNodes(
       id: node.id,
       type: 'graphNode',
       position,
+      draggable: editModeEnabled,
       data: {
         ...mapNodeToGraphData(node, state, content),
         selected: isSelected,
+        editMode: editModeEnabled,
+        onAddChild,
       },
     };
   });

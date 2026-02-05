@@ -229,6 +229,46 @@
   border-color: rgba(245, 158, 11, 0.6) !important;
 }
 
+/* ===========================================
+   EDIT MODE - Draggable nodes and add button
+   =========================================== */
+.graph-node.edit-mode {
+  cursor: grab;
+}
+
+.graph-node.edit-mode:active {
+  cursor: grabbing;
+}
+
+/* Add child button - appears on quickview nodes in edit mode */
+.add-child-btn {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #667eea;
+  border: 2px solid #0d0d14;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 20;
+  padding: 0;
+}
+
+.add-child-btn:hover {
+  background: #5a6fd6;
+  transform: scale(1.15);
+}
+
+.add-child-btn:active {
+  transform: scale(1.05);
+}
+
 .graph-node.skill.quickview,
 .graph-node.skill-group.quickview {
   border-color: rgba(102, 126, 234, 0.3);

@@ -1,102 +1,109 @@
 # Virtual CV - Backlog
 
-Organized tasks and ideas for future development.
+Organized tasks for current and future development.
 
 ---
 
-## Phase 2: Backend Foundation
+## ✅ Completed
 
-### 2.1 API Setup
-- [ ] Create Java Spring Boot API project (`virtual-cv-api/`)
-- [ ] Define domain model (Node, Edge, ViewerType)
-- [ ] Implement REST endpoints for graph data
-- [ ] Add CORS configuration for frontend
+### Phase 1: UI Prototype
+- [x] Interactive graph canvas with React Flow
+- [x] Three-state node system (detailed/quickview/dormant)
+- [x] Business card profile node with photo
+- [x] Inspector panel with markdown rendering
+- [x] Dark theme with purple accents
+- [x] Navigation: home button, search (Cmd+K)
+- [x] Deep linking via URL hash
+- [x] Keyboard navigation (Escape to deselect)
+- [x] Standard CV view (alternative to graph)
+- [x] GitHub Pages deployment
 
-### 2.2 Frontend Integration
-- [ ] Connect frontend to backend API (replace static data)
-- [ ] Environment-based API URL configuration (dev/prod)
-- [ ] Add loading states and error handling
+### Phase 2: Backend Foundation
+- [x] Spring Boot API (`virtual-cv-api/`)
+- [x] Domain model (CvNode with type, label, parentId, attributes)
+- [x] PostgreSQL persistence with Flyway migrations
+- [x] CORS configuration
+- [x] REST endpoints: GET /cv, POST/PUT/DELETE for nodes
+- [x] Repository tests with Testcontainers
+
+### Phase 3: Edit Mode & Content Management
+- [x] Edit mode toggle (feature-flagged, pencil button in menu)
+- [x] Create node dialog (categories, items, skill groups, skills)
+- [x] Edit node (label, description, content)
+- [x] Delete node with confirmation + cascade
+- [x] Draft/publish workflow (isDraft attribute)
+- [x] Toast notifications for actions
+- [x] Hard delete (replaces soft-delete)
+- [x] Drag-to-position nodes (persists to backend)
+- [x] Add child node via + button on graph nodes
+
+### Phase 4: Frontend-Backend Integration
+- [x] Generated TypeScript API client from OpenAPI spec
+- [x] Connect frontend to real API
+- [x] Environment-based API URL (`VITE_API_URL`)
+- [x] Custom fetch with typed error handling
+- [x] Loading states during API calls
+
+### Phase 5: Infrastructure & Deployment
+- [x] Docker Compose for local development (API + PostgreSQL)
+- [x] Backend deployment (Oracle Cloud VM or Kubernetes)
+- [x] CI/CD pipeline for API deployment
 
 ---
 
-## Phase 3: Infrastructure (Oracle Cloud + Kubernetes)
+## 🚧 Up Next
 
-### 3.1 Cluster Setup
-- [ ] Create Oracle Cloud account and configure OKE
-- [ ] Provision ARM node pool (free tier)
-- [ ] Create PostgreSQL deployment + PVC
-- [ ] Deploy Spring Boot API
-- [ ] Configure Nginx ingress for API routing
+### Infrastructure Enhancements
+- [ ] PostgreSQL backup strategy
 
-### 3.2 Automation & Reliability
-- [ ] Create cluster provisioning script (Terraform or shell)
-- [ ] Document cluster recreation steps
-- [ ] Backup strategy for PostgreSQL (pg_dump to object storage)
-- [ ] Restore procedure for cluster upgrades
-- [ ] CI/CD pipeline for API deployment
+### UI Polish
+- [x] Smooth animations/transitions when nodes expand
+- [x] Mobile-responsive improvements
+- [ ] Light/dark theme toggle
+- [ ] Minimap as an on/off option 
 
----
-
-## Phase 4: Viewer Modes
-
-### 4.1 Audience-Based Filtering
+### Viewer Modes
 - [ ] Define viewer types: `recruiter`, `engineer`, `manager`, `public`
-- [ ] Add visibility flags to nodes (which viewers see what)
+- [ ] Visibility flags per node (which viewers see what)
 - [ ] URL parameter or toggle to switch viewer mode
 - [ ] Filter graph data based on selected viewer
-- [ ] Persist viewer preference (localStorage or URL)
 
----
-
-## Phase 5: Content Management
-
-### 5.1 CMS-like Editing
-- [ ] Admin authentication (JWT or basic auth)
-- [ ] CRUD endpoints for nodes and edges
-- [ ] Simple admin UI for editing graph content
-- [ ] Draft/publish workflow
-- [ ] Media upload for profile photos
-
----
-
-## Phase 6: AI Features
-
-### 6.1 CV Import Assistant
-- [ ] Upload traditional CV (PDF/DOCX)
-- [ ] Parse document and extract structured data
-- [ ] AI-assisted mapping to graph nodes
-- [ ] Review and edit before saving
-
----
-
-## Phase 7: Export
-
-### 7.1 PDF Generation
-- [ ] Human-readable PDF (formatted, styled)
+### Export Features
+- [ ] PDF export (human-readable, styled)
 - [ ] ATS-friendly PDF (plain text, parseable)
+- [ ] Markdown export
+- [ ] JSON export/import
 - [ ] Viewer-specific exports (filtered by audience)
-- [ ] Download button in UI
 
 ---
 
-## Ideas / Parking Lot
+## 📦 Future Features
+
+### Advanced Features
+- [ ] Media upload for images
+- [ ] Graph validation (orphan detection, broken refs)
+- [ ] Guided tour / onboarding mode
+- [ ] Analytics (which nodes get viewed most)
+
+---
+
+## 💡 Ideas / Parking Lot
 
 _Unscoped ideas for later consideration:_
 
+- CLI client (`cv search "react"`, `cv node job-a`, `cv export`)
+- CV import assistant (parse PDF/DOCX, AI-assisted mapping)
 - Link previews for projects (fetch metadata)
-- Guided tour / onboarding mode
-- Analytics (which nodes get viewed most)
 - Public sharing with unique URLs
 - Multilingual support
-- Dark/light theme toggle
+- CV Life Simulator (roguelike game based on CV content)
+- multiple cv's and multiple users
 
 ---
 
 ## Priority Order
 
-1. **Phase 2** - Backend (enables real data)
-2. **Phase 3** - Infrastructure (enables persistence + deployment)
-3. **Phase 4** - Viewer modes (core differentiator)
-4. **Phase 7** - Export (immediate value)
-5. **Phase 5** - CMS (nice to have)
-6. **Phase 6** - AI (future enhancement)
+1. **Viewer Modes** - core differentiator
+2. **Export Features** - immediate value for users
+3. **UI Polish** - refinement and accessibility
+4. **Advanced Features** - polish and differentiation

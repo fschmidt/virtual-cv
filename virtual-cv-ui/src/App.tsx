@@ -17,6 +17,7 @@ import SearchDialog from './components/SearchDialog';
 import InspectorPanel from './components/InspectorPanel';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import FeatureTogglePopup from './components/FeatureTogglePopup';
+import CreateNodeDialog from './components/CreateNodeDialog';
 import { ToastProvider, useToast } from './components/Toast';
 import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap, type UpdateNodeCommand, type CreateNodeCommand } from './services';
 import type { CVData, CVNodeType } from './types';
@@ -79,6 +80,7 @@ function Flow() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFeaturePopupOpen, setIsFeaturePopupOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [createDialogParentId, setCreateDialogParentId] = useState<string | null>(null);
   const [nodes, setNodes] = useNodesState(initialNodes);
   const [edges, setEdges] = useEdgesState(initialEdges);
   const { fitView } = useReactFlow();
@@ -114,10 +116,15 @@ function Flow() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Handle adding a child node - opens create dialog directly
+  const onAddChild = useCallback((parentId: string) => {
+    setCreateDialogParentId(parentId);
+  }, []);
+
   // Rebuild graph when data or selection changes
   useEffect(() => {
     if (cvData && viewMode === 'graph') {
-      setNodes(buildNodes(cvData, selectedId, contentMap, true, INSPECTOR_MODE, editMode));
+      setNodes(buildNodes(cvData, selectedId, contentMap, true, INSPECTOR_MODE, editMode, onAddChild));
       setEdges(buildEdges(cvData, selectedId, editMode));
 
       // Animate to fit view after state change
@@ -131,7 +138,7 @@ function Flow() {
         fitView({ padding: 0.3, duration: ANIMATION_DURATION });
       }, 350);
     }
-  }, [cvData, selectedId, viewMode, contentMap, setNodes, setEdges, fitView, editMode]);
+  }, [cvData, selectedId, viewMode, contentMap, setNodes, setEdges, fitView, editMode, onAddChild]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -147,9 +154,11 @@ function Flow() {
         e.preventDefault();
         setIsSearchOpen(true);
       }
-      // Escape to close search, feature popup, or deselect node
+      // Escape to close dialogs or deselect node
       if (e.key === 'Escape') {
-        if (isFeaturePopupOpen) {
+        if (createDialogParentId) {
+          setCreateDialogParentId(null);
+        } else if (isFeaturePopupOpen) {
           setIsFeaturePopupOpen(false);
         } else if (isSearchOpen) {
           setIsSearchOpen(false);
@@ -160,7 +169,7 @@ function Flow() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSearchOpen, isFeaturePopupOpen]);
+  }, [isSearchOpen, isFeaturePopupOpen, createDialogParentId]);
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedId((current) => (current === node.id ? null : node.id));
@@ -242,6 +251,25 @@ function Flow() {
     }
   }, [showToast, showError]);
 
+  // Handle node drag end - persist position to backend
+  const onNodeDragStop = useCallback(
+    async (_event: React.MouseEvent, node: Node) => {
+      if (!editMode) return;
+
+      try {
+        await cvService.updateNode(node.id, {
+          positionX: Math.round(node.position.x),
+          positionY: Math.round(node.position.y),
+        });
+        // Don't refresh all data - just update the local position
+        // The position is already updated in the local state by React Flow
+      } catch (error) {
+        showError(error);
+      }
+    },
+    [editMode, showError]
+  );
+
   if (!cvData) {
     return (
       <div className="app loading">
@@ -268,6 +296,8 @@ function Flow() {
               nodeTypes={nodeTypes}
               onNodeClick={onNodeClick}
               onPaneClick={onPaneClick}
+              onNodeDragStop={onNodeDragStop}
+              nodesDraggable={editMode}
               fitView
               fitViewOptions={{ padding: 0.3, duration: ANIMATION_DURATION }}
             >
@@ -302,6 +332,15 @@ function Flow() {
         isOpen={isFeaturePopupOpen}
         onClose={() => setIsFeaturePopupOpen(false)}
       />
+      {/* Create node dialog triggered from graph + button */}
+      {createDialogParentId && cvData.nodes.find((n) => n.id === createDialogParentId) && (
+        <CreateNodeDialog
+          isOpen={true}
+          parentNode={cvData.nodes.find((n) => n.id === createDialogParentId)!}
+          onClose={() => setCreateDialogParentId(null)}
+          onCreate={onCreateNode}
+        />
+      )}
     </div>
   );
 }
