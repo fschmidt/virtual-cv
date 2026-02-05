@@ -15,6 +15,7 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
+            "https://cv.fschmidts.net",
             "https://fschmidt.github.io",
             "http://localhost:5173"  // Vite dev server
         ));
