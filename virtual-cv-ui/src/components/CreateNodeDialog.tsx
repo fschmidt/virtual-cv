@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState, useCallback } from 'react';
+import { memo, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Plus, X } from 'lucide-react';
 import type { CVNode, CVNodeType, CVSectionId, CVCategoryNode } from '../types';
 import { CV_SECTIONS } from '../types';
@@ -63,7 +63,8 @@ interface FormData {
 
 function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
-  const allowedTypes = getAllowedChildTypes(parentNode);
+  // Memoize to prevent infinite loop in the reset effect below
+  const allowedTypes = useMemo(() => getAllowedChildTypes(parentNode), [parentNode]);
   const [selectedType, setSelectedType] = useState<CVNodeType | null>(
     allowedTypes.length === 1 ? allowedTypes[0] : null
   );
@@ -119,6 +120,7 @@ function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeD
     try {
       // Build the command based on type
       const command: CreateNodeCommand = {
+        id: crypto.randomUUID(),
         parentId: parentNode.id,
         label: formData.label.trim(),
         description: formData.description.trim() || undefined,
