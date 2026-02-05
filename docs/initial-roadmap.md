@@ -156,6 +156,13 @@ Possible Add-ons
 	•	Performance:
 	•	graph payload caching
 	•	lazy loading node details
+	•	CV Life Simulator (Roguelike Game):
+	•	Text/image-based roguelike where users experience a "virtual life" of the CV owner
+	•	Random choice-based scenarios derived from CV content (career decisions, skill applications, project challenges)
+	•	Character attributes (happiness, career satisfaction, work-life balance) that change based on choices
+	•	Choices aligned with CV owner's actual preferences/values reward better outcomes
+	•	Gamified way to understand the person behind the CV
+	•	Could include: random events, branching storylines, multiple endings, score/leaderboard
 
 Notes
 	•	Finish a few features completely rather than many partially.

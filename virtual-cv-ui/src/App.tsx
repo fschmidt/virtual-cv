@@ -1,8 +1,7 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
-  Controls,
   useNodesState,
   useEdgesState,
   useReactFlow,
@@ -17,9 +16,11 @@ import StandardCVView from './components/StandardCVView';
 import SearchDialog from './components/SearchDialog';
 import InspectorPanel from './components/InspectorPanel';
 import LoadingSkeleton from './components/LoadingSkeleton';
-import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap } from './services';
+import FeatureTogglePopup from './components/FeatureTogglePopup';
+import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap, type UpdateNodeCommand } from './services';
 import type { CVData } from './types';
 import { CV_SECTIONS } from './types';
+import { Feature, isFeatureEnabled } from './utils/feature-flags';
 
 const nodeTypes = {
   graphNode: GraphNode,
@@ -75,9 +76,13 @@ function Flow() {
   const [viewMode, setViewMode] = useState<ViewMode>('graph');
   const [contentMap, setContentMap] = useState<ContentMap>({});
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isFeaturePopupOpen, setIsFeaturePopupOpen] = useState(false);
   const [nodes, setNodes] = useNodesState(initialNodes);
   const [edges, setEdges] = useEdgesState(initialEdges);
   const { fitView } = useReactFlow();
+
+  // Feature flags
+  const editModeEnabled = useMemo(() => isFeatureEnabled(Feature.EDIT_MODE), []);
 
   // Load data on mount (mimics API call)
   useEffect(() => {
@@ -126,14 +131,22 @@ function Flow() {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Shift+D to toggle feature popup
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        setIsFeaturePopupOpen((prev) => !prev);
+        return;
+      }
       // Cmd+K or Ctrl+K to open search
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsSearchOpen(true);
       }
-      // Escape to close search or deselect node
+      // Escape to close search, feature popup, or deselect node
       if (e.key === 'Escape') {
-        if (isSearchOpen) {
+        if (isFeaturePopupOpen) {
+          setIsFeaturePopupOpen(false);
+        } else if (isSearchOpen) {
           setIsSearchOpen(false);
         } else {
           setSelectedId(null);
@@ -142,7 +155,7 @@ function Flow() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSearchOpen]);
+  }, [isSearchOpen, isFeaturePopupOpen]);
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedId((current) => (current === node.id ? null : node.id));
@@ -159,6 +172,16 @@ function Flow() {
   const onSearchSelect = useCallback((nodeId: string) => {
     setSelectedId(nodeId);
     setViewMode('graph'); // Switch to graph view if in CV view
+  }, []);
+
+  // Handle saving node edits
+  const onSaveNode = useCallback(async (id: string, updates: UpdateNodeCommand, _content?: string) => {
+    await cvService.updateNode(id, updates);
+    // Refresh data after save
+    const newData = await cvService.getCVData();
+    setCvData(newData);
+    // Refresh content map (content is already updated via setNodeContent in InspectorPanel)
+    setContentMap(getAllContent());
   }, []);
 
   if (!cvData) {
@@ -184,7 +207,6 @@ function Flow() {
               fitView
               fitViewOptions={{ padding: 0.3, duration: ANIMATION_DURATION }}
             >
-              <Controls />
               <HomeButton onClick={onHomeClick} visible={selectedId !== null} />
             </ReactFlow>
           </div>
@@ -194,6 +216,8 @@ function Flow() {
             contentMap={contentMap}
             sections={CV_SECTIONS}
             onClose={onHomeClick}
+            editModeEnabled={editModeEnabled}
+            onSave={onSaveNode}
           />
         </>
       ) : (
@@ -206,6 +230,10 @@ function Flow() {
         cvData={cvData}
         contentMap={contentMap}
         sections={CV_SECTIONS}
+      />
+      <FeatureTogglePopup
+        isOpen={isFeaturePopupOpen}
+        onClose={() => setIsFeaturePopupOpen(false)}
       />
     </div>
   );

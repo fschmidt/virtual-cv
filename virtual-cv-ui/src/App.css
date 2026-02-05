@@ -579,43 +579,64 @@
 }
 
 /* ===========================================
-   VIEW TOGGLE
+   FLOATING MENU
    =========================================== */
-.view-toggle {
+.floating-menu {
   position: fixed;
   top: 10px;
   left: 60px;
-  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 50;
+}
+
+.floating-menu-toggle {
+  display: none;
+}
+
+.floating-menu-items {
   display: flex;
   gap: 2px;
   background: rgba(26, 26, 46, 0.95);
-  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
   padding: 4px;
+  backdrop-filter: blur(8px);
 }
 
-.view-toggle-btn {
+.floating-menu-items.hidden {
+  display: none;
+}
+
+.floating-menu-btn {
   width: 36px;
   height: 36px;
+  padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
   color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   transition: all 0.2s ease;
 }
 
-.view-toggle-btn:hover {
+.floating-menu-btn:hover {
   color: rgba(255, 255, 255, 0.8);
   background: rgba(255, 255, 255, 0.05);
 }
 
-.view-toggle-btn.active {
+.floating-menu-btn.active {
   color: white;
   background: rgba(102, 126, 234, 0.4);
+}
+
+.floating-menu-btn span {
+  display: none;
 }
 
 /* ===========================================
@@ -836,7 +857,7 @@
     background: white;
   }
 
-  .view-toggle {
+  .floating-menu {
     display: none;
   }
 
@@ -1052,6 +1073,143 @@
 }
 
 /* ===========================================
+   FEATURE TOGGLE POPUP
+   =========================================== */
+.feature-toggle-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  animation: fadeIn 0.15s ease;
+}
+
+.feature-toggle-dialog {
+  width: 100%;
+  max-width: 400px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  outline: none;
+}
+
+.feature-toggle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.feature-toggle-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.feature-toggle-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.feature-toggle-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.feature-toggle-list {
+  padding: 12px 0;
+}
+
+.feature-toggle-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.feature-toggle-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.feature-toggle-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.feature-toggle-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feature-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: white;
+}
+
+.feature-toggle-label svg {
+  flex-shrink: 0;
+}
+
+.feature-toggle-description {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.4;
+}
+
+.feature-toggle-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.feature-toggle-footer span {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.feature-toggle-footer kbd {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-family: inherit;
+  border: none;
+}
+
+/* ===========================================
    INSPECTOR PANEL (Side Panel)
    =========================================== */
 .inspector-panel {
@@ -1254,6 +1412,170 @@
   content: '✉️ ';
 }
 
+/* ===========================================
+   INSPECTOR PANEL - Edit Mode
+   =========================================== */
+.inspector-edit-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(102, 126, 234, 0.2);
+  color: #a78bfa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 5;
+}
+
+.inspector-edit-btn:hover {
+  background: rgba(102, 126, 234, 0.4);
+  color: white;
+  border-color: rgba(102, 126, 234, 0.5);
+}
+
+.inspector-edit-form {
+  padding-top: 8px;
+}
+
+.edit-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.edit-form-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.edit-cancel-btn {
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.edit-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.edit-error {
+  padding: 12px;
+  margin-bottom: 16px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #f87171;
+  font-size: 0.85rem;
+}
+
+.edit-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-field span {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.edit-field input,
+.edit-field textarea,
+.edit-field select {
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.edit-field input:focus,
+.edit-field textarea:focus,
+.edit-field select:focus {
+  outline: none;
+  border-color: rgba(102, 126, 234, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.edit-field textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.edit-field select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.edit-field select option {
+  background: #1a1a2e;
+  color: white;
+}
+
+.edit-save-btn {
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.edit-save-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.edit-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Content field - larger textarea with monospace */
+.edit-field-content textarea {
+  min-height: 150px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 /* Scrollbar styling */
 .inspector-panel::-webkit-scrollbar {
   width: 6px;
@@ -1374,9 +1696,71 @@
     height: 100% !important;
   }
 
-  /* Adjust view toggle position on mobile */
-  .view-toggle {
+  /* Mobile floating menu */
+  .floating-menu {
+    top: 10px;
     left: 10px;
+  }
+
+  .floating-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: rgba(26, 26, 46, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+  }
+
+  .floating-menu-toggle:hover {
+    background: rgba(26, 26, 46, 1);
+    color: white;
+  }
+
+  .floating-menu.open .floating-menu-toggle {
+    background: rgba(102, 126, 234, 0.3);
+    color: white;
+  }
+
+  .floating-menu-items {
+    position: absolute;
+    top: 54px;
+    left: 0;
+    flex-direction: column;
+    padding: 8px;
+    min-width: 140px;
+    animation: slideDown 0.2s ease;
+  }
+
+  .floating-menu-btn {
+    width: 100%;
+    height: 44px;
+    padding: 0 12px;
+    justify-content: flex-start;
+  }
+
+  .floating-menu-btn span {
+    display: inline;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Controls positioning - move up when panel is open */

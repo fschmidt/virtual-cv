@@ -1,11 +1,21 @@
-import { memo, useRef, useCallback } from 'react';
+import { memo, useRef, useCallback, useState, useEffect } from 'react';
 import Markdown from 'react-markdown';
+import { Pencil, X } from 'lucide-react';
 import SectionIcon from './SectionIcon';
 import type { CVNode, CVProfileNode, CVData, CVSection } from '../types';
-import type { ContentMap } from '../services';
+import type { ContentMap, UpdateNodeCommand } from '../services';
+import { setNodeContent } from '../services';
 
 // Swipe threshold in pixels
 const SWIPE_THRESHOLD = 80;
+
+// Local form data type with flat string attributes for UI
+interface FormData {
+  label?: string;
+  description?: string;
+  content?: string; // Markdown content
+  attributes?: Record<string, string | undefined>;
+}
 
 interface InspectorPanelProps {
   selectedId: string | null;
@@ -13,6 +23,8 @@ interface InspectorPanelProps {
   contentMap: ContentMap;
   sections: CVSection[];
   onClose: () => void;
+  editModeEnabled?: boolean;
+  onSave?: (id: string, updates: UpdateNodeCommand, content?: string) => Promise<void>;
 }
 
 // Type guards
@@ -54,38 +66,191 @@ function getSectionIcon(node: CVNode, nodes: CVNode[], sections: CVSection[]): s
   return null;
 }
 
-function InspectorPanel({ selectedId, cvData, contentMap, sections, onClose }: InspectorPanelProps) {
+// Build form data from node
+function buildFormDataFromNode(node: CVNode): FormData {
+  const base: FormData = {
+    label: node.label,
+    description: node.description,
+  };
+
+  switch (node.type) {
+    case 'profile': {
+      const p = node as CVProfileNode;
+      return {
+        ...base,
+        attributes: {
+          name: p.name,
+          title: p.title,
+          subtitle: p.subtitle,
+          experience: p.experience,
+          email: p.email,
+          location: p.location,
+          photoUrl: p.photoUrl,
+        },
+      };
+    }
+    case 'item':
+      return {
+        ...base,
+        attributes: {
+          company: 'company' in node ? node.company : undefined,
+          dateRange: 'dateRange' in node ? node.dateRange : undefined,
+          location: 'location' in node ? node.location : undefined,
+        },
+      };
+    case 'skill':
+    case 'skill-group':
+      return {
+        ...base,
+        attributes: {
+          proficiencyLevel: 'proficiencyLevel' in node ? node.proficiencyLevel : undefined,
+        },
+      };
+    default:
+      return base;
+  }
+}
+
+// Convert FormData to UpdateNodeCommand for API
+function toUpdateNodeCommand(data: FormData): UpdateNodeCommand {
+  const result: UpdateNodeCommand = {
+    label: data.label,
+    description: data.description,
+  };
+
+  if (data.attributes && Object.keys(data.attributes).length > 0) {
+    // Cast to bypass strict typing - API accepts flat attributes
+    result.attributes = data.attributes as unknown as UpdateNodeCommand['attributes'];
+  }
+
+  return result;
+}
+
+// Edit button component
+function EditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button className="inspector-edit-btn" onClick={onClick} title="Edit">
+      <Pencil size={18} strokeWidth={2} color="#a78bfa" />
+    </button>
+  );
+}
+
+function InspectorPanel({
+  selectedId,
+  cvData,
+  contentMap,
+  sections,
+  onClose,
+  editModeEnabled = false,
+  onSave,
+}: InspectorPanelProps) {
   // Swipe to close tracking
   const touchStartY = useRef<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<FormData>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Get node early to use in effects
+  const node = selectedId ? cvData.nodes.find((n) => n.id === selectedId) : null;
+
+  // Reset edit state when selected node changes
+  useEffect(() => {
+    setIsEditing(false);
+    setError(null);
+    if (node) {
+      setFormData(buildFormDataFromNode(node));
+    }
+  }, [selectedId, node]);
+
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    // Only track swipe if at the top of scroll
     if (panelRef.current && panelRef.current.scrollTop <= 0) {
       touchStartY.current = e.touches[0].clientY;
     }
   }, []);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (touchStartY.current === null) return;
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (touchStartY.current === null) return;
 
-    const deltaY = e.touches[0].clientY - touchStartY.current;
+      const deltaY = e.touches[0].clientY - touchStartY.current;
 
-    // If swiping down past threshold, close the panel
-    if (deltaY > SWIPE_THRESHOLD) {
-      touchStartY.current = null;
-      onClose();
-    }
-  }, [onClose]);
+      if (deltaY > SWIPE_THRESHOLD) {
+        touchStartY.current = null;
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   const handleTouchEnd = useCallback(() => {
     touchStartY.current = null;
   }, []);
 
-  if (!selectedId) return null;
+  const handleStartEdit = useCallback(() => {
+    if (node && selectedId) {
+      setFormData({
+        ...buildFormDataFromNode(node),
+        content: contentMap[selectedId] ?? '',
+      });
+      setIsEditing(true);
+      setError(null);
+    }
+  }, [node, selectedId, contentMap]);
 
-  const node = cvData.nodes.find((n) => n.id === selectedId);
-  if (!node) return null;
+  const handleCancelEdit = useCallback(() => {
+    setIsEditing(false);
+    setError(null);
+    if (node) {
+      setFormData(buildFormDataFromNode(node));
+    }
+  }, [node]);
+
+  const handleSave = useCallback(async () => {
+    if (!selectedId || !onSave) return;
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      await onSave(selectedId, toUpdateNodeCommand(formData), formData.content);
+      // Update local content service
+      if (formData.content !== undefined) {
+        setNodeContent(selectedId, formData.content);
+      }
+      setIsEditing(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save changes');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [selectedId, formData, onSave]);
+
+  const handleFieldChange = useCallback(
+    (field: string, value: string, isAttribute = false) => {
+      setFormData((prev: FormData): FormData => {
+        if (isAttribute) {
+          return {
+            ...prev,
+            attributes: {
+              ...prev.attributes,
+              [field]: value,
+            },
+          };
+        }
+        return {
+          ...prev,
+          [field]: value,
+        };
+      });
+    },
+    []
+  );
+
+  if (!selectedId || !node) return null;
 
   const content = contentMap[selectedId];
   const parentChain = getParentChain(selectedId, cvData.nodes);
@@ -94,9 +259,7 @@ function InspectorPanel({ selectedId, cvData, contentMap, sections, onClose }: I
   // Close button (visible on mobile only via CSS)
   const closeButton = (
     <button className="inspector-close" onClick={onClose} title="Close">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M18 6L6 18M6 6l12 12" />
-      </svg>
+      <X size={20} strokeWidth={2} />
     </button>
   );
 
@@ -108,11 +271,99 @@ function InspectorPanel({ selectedId, cvData, contentMap, sections, onClose }: I
     onTouchEnd: handleTouchEnd,
   };
 
-  // Profile node - special rendering
+  // Edit form for profile nodes
+  if (isProfileNode(node) && isEditing) {
+    return (
+      <div className="inspector-panel" {...touchHandlers}>
+        {closeButton}
+        <div className="inspector-edit-form">
+          <div className="edit-form-header">
+            <h2>Edit Profile</h2>
+            <button className="edit-cancel-btn" onClick={handleCancelEdit}>
+              Cancel
+            </button>
+          </div>
+
+          {error && <div className="edit-error">{error}</div>}
+
+          <div className="edit-form-fields">
+            <label className="edit-field">
+              <span>Name</span>
+              <input
+                type="text"
+                value={(formData.attributes?.name as string) ?? ''}
+                onChange={(e) => handleFieldChange('name', e.target.value, true)}
+              />
+            </label>
+            <label className="edit-field">
+              <span>Title</span>
+              <input
+                type="text"
+                value={(formData.attributes?.title as string) ?? ''}
+                onChange={(e) => handleFieldChange('title', e.target.value, true)}
+              />
+            </label>
+            <label className="edit-field">
+              <span>Subtitle</span>
+              <input
+                type="text"
+                value={(formData.attributes?.subtitle as string) ?? ''}
+                onChange={(e) => handleFieldChange('subtitle', e.target.value, true)}
+              />
+            </label>
+            <label className="edit-field">
+              <span>Experience</span>
+              <input
+                type="text"
+                value={(formData.attributes?.experience as string) ?? ''}
+                onChange={(e) => handleFieldChange('experience', e.target.value, true)}
+              />
+            </label>
+            <label className="edit-field">
+              <span>Email</span>
+              <input
+                type="email"
+                value={(formData.attributes?.email as string) ?? ''}
+                onChange={(e) => handleFieldChange('email', e.target.value, true)}
+              />
+            </label>
+            <label className="edit-field">
+              <span>Location</span>
+              <input
+                type="text"
+                value={(formData.attributes?.location as string) ?? ''}
+                onChange={(e) => handleFieldChange('location', e.target.value, true)}
+              />
+            </label>
+
+            {/* Markdown content */}
+            <label className="edit-field edit-field-content">
+              <span>About (Markdown)</span>
+              <textarea
+                value={formData.content ?? ''}
+                onChange={(e) => handleFieldChange('content', e.target.value)}
+                rows={8}
+                placeholder="Enter markdown content..."
+              />
+            </label>
+          </div>
+
+          <button className="edit-save-btn" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Profile node - view mode
   if (isProfileNode(node)) {
     return (
       <div className="inspector-panel" {...touchHandlers}>
         {closeButton}
+        {editModeEnabled && onSave && (
+          <EditButton onClick={handleStartEdit} />
+        )}
         <div className="inspector-profile">
           <div className="inspector-profile-photo">
             <img src={node.photoUrl} alt={node.name} />
@@ -135,10 +386,114 @@ function InspectorPanel({ selectedId, cvData, contentMap, sections, onClose }: I
     );
   }
 
-  // Other nodes
+  // Edit form for other nodes
+  if (isEditing) {
+    return (
+      <div className="inspector-panel" {...touchHandlers}>
+        {closeButton}
+        <div className="inspector-edit-form">
+          <div className="edit-form-header">
+            <h2>Edit Node</h2>
+            <button className="edit-cancel-btn" onClick={handleCancelEdit}>
+              Cancel
+            </button>
+          </div>
+
+          {error && <div className="edit-error">{error}</div>}
+
+          <div className="edit-form-fields">
+            <label className="edit-field">
+              <span>Label</span>
+              <input
+                type="text"
+                value={formData.label ?? ''}
+                onChange={(e) => handleFieldChange('label', e.target.value)}
+              />
+            </label>
+            <label className="edit-field">
+              <span>Description</span>
+              <textarea
+                value={formData.description ?? ''}
+                onChange={(e) => handleFieldChange('description', e.target.value)}
+                rows={3}
+              />
+            </label>
+
+            {/* Item-specific fields */}
+            {node.type === 'item' && (
+              <>
+                <label className="edit-field">
+                  <span>Company</span>
+                  <input
+                    type="text"
+                    value={(formData.attributes?.company as string) ?? ''}
+                    onChange={(e) => handleFieldChange('company', e.target.value, true)}
+                  />
+                </label>
+                <label className="edit-field">
+                  <span>Date Range</span>
+                  <input
+                    type="text"
+                    value={(formData.attributes?.dateRange as string) ?? ''}
+                    onChange={(e) => handleFieldChange('dateRange', e.target.value, true)}
+                  />
+                </label>
+                <label className="edit-field">
+                  <span>Location</span>
+                  <input
+                    type="text"
+                    value={(formData.attributes?.location as string) ?? ''}
+                    onChange={(e) => handleFieldChange('location', e.target.value, true)}
+                  />
+                </label>
+              </>
+            )}
+
+            {/* Skill-specific fields */}
+            {(node.type === 'skill' || node.type === 'skill-group') && (
+              <label className="edit-field">
+                <span>Proficiency Level</span>
+                <select
+                  value={(formData.attributes?.proficiencyLevel as string) ?? ''}
+                  onChange={(e) => handleFieldChange('proficiencyLevel', e.target.value, true)}
+                >
+                  <option value="">Select level</option>
+                  <option value="expert">Expert</option>
+                  <option value="advanced">Advanced</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="beginner">Beginner</option>
+                </select>
+              </label>
+            )}
+
+            {/* Markdown content */}
+            <label className="edit-field edit-field-content">
+              <span>Content (Markdown)</span>
+              <textarea
+                value={formData.content ?? ''}
+                onChange={(e) => handleFieldChange('content', e.target.value)}
+                rows={8}
+                placeholder="Enter markdown content..."
+              />
+            </label>
+          </div>
+
+          <button className="edit-save-btn" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Other nodes - view mode
   return (
     <div className="inspector-panel" {...touchHandlers}>
       {closeButton}
+      {editModeEnabled && onSave && (
+        <EditButton onClick={handleStartEdit} />
+      )}
+
       {/* Breadcrumb */}
       <div className="inspector-breadcrumb">
         {parentChain.map((n, i) => (
@@ -153,26 +508,18 @@ function InspectorPanel({ selectedId, cvData, contentMap, sections, onClose }: I
 
       {/* Header with icon */}
       <div className="inspector-header">
-        {sectionIcon && (
-          <SectionIcon icon={sectionIcon} size={28} className="inspector-icon" />
-        )}
+        {sectionIcon && <SectionIcon icon={sectionIcon} size={28} className="inspector-icon" />}
         <h1 className="inspector-title">{node.label.replace(/\n/g, ' ')}</h1>
       </div>
 
       {/* Meta info for items */}
-      {'company' in node && node.company && (
-        <p className="inspector-company">{node.company}</p>
-      )}
-      {'dateRange' in node && node.dateRange && (
-        <p className="inspector-date">{node.dateRange}</p>
-      )}
+      {'company' in node && node.company && <p className="inspector-company">{node.company}</p>}
+      {'dateRange' in node && node.dateRange && <p className="inspector-date">{node.dateRange}</p>}
 
       {/* Proficiency for skills */}
       {'proficiencyLevel' in node && node.proficiencyLevel && (
         <div className="inspector-proficiency">
-          <span className={`proficiency-badge ${node.proficiencyLevel}`}>
-            {node.proficiencyLevel}
-          </span>
+          <span className={`proficiency-badge ${node.proficiencyLevel}`}>{node.proficiencyLevel}</span>
         </div>
       )}
 
@@ -184,9 +531,7 @@ function InspectorPanel({ selectedId, cvData, contentMap, sections, onClose }: I
       )}
 
       {/* Fallback for nodes without content */}
-      {!content && node.description && (
-        <p className="inspector-description">{node.description}</p>
-      )}
+      {!content && node.description && <p className="inspector-description">{node.description}</p>}
     </div>
   );
 }
