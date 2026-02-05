@@ -10,8 +10,8 @@ import type {
   CVSectionId,
   NodePosition,
 } from '../types';
-import { getAllNodes, search, CvNodeDtoType } from '../api/generated';
-import type { CvNodeDto } from '../api/generated';
+import { getAllNodes, search, updateNode as apiUpdateNode, CvNodeDtoType } from '../api/generated';
+import type { CvNodeDto, UpdateNodeCommand } from '../api/generated';
 
 // Map API node type to frontend node type
 function mapNodeType(apiType: CvNodeDtoType): CVNodeType {
@@ -112,7 +112,12 @@ export interface CVService {
   getNode(id: string): Promise<CVNode | undefined>;
   getChildren(parentId: string): Promise<CVNode[]>;
   searchNodes(query: string): Promise<CVNode[]>;
+  updateNode(id: string, updates: UpdateNodeCommand): Promise<CVNode>;
+  clearCache(): void;
 }
+
+// Re-export UpdateNodeCommand for consumers
+export type { UpdateNodeCommand };
 
 // Real API implementation
 class ApiCVService implements CVService {
@@ -142,6 +147,13 @@ class ApiCVService implements CVService {
   async searchNodes(query: string): Promise<CVNode[]> {
     const response = await search({ q: query });
     return (response.data ?? []).map(mapApiNodeToFrontend);
+  }
+
+  async updateNode(id: string, updates: UpdateNodeCommand): Promise<CVNode> {
+    // Backend requires id in request body to match path variable
+    const response = await apiUpdateNode(id, { ...updates, id });
+    this.clearCache(); // Invalidate cache after update
+    return mapApiNodeToFrontend(response.data);
   }
 
   // Clear cache to force reload

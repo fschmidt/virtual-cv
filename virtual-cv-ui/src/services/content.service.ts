@@ -28,8 +28,8 @@ function parseMarkdownSections(markdown: string): ContentMap {
   return contentMap;
 }
 
-// Parse content on module load
-const contentMap = parseMarkdownSections(cvContentRaw);
+// Parse content on module load (mutable for runtime updates)
+let contentMap = parseMarkdownSections(cvContentRaw);
 
 /**
  * Get markdown content for a specific node ID.
@@ -42,5 +42,30 @@ export function getNodeContent(nodeId: string): string | undefined {
  * Get all parsed content as a map.
  */
 export function getAllContent(): ContentMap {
-  return contentMap;
+  return { ...contentMap };
+}
+
+/**
+ * Update content for a specific node ID (runtime only, not persisted to file).
+ */
+export function setNodeContent(nodeId: string, content: string): void {
+  if (content.trim()) {
+    contentMap[nodeId] = content;
+  } else {
+    delete contentMap[nodeId];
+  }
+}
+
+/**
+ * Merge new content into the content map (used after API updates).
+ */
+export function mergeContent(updates: ContentMap): void {
+  contentMap = { ...contentMap, ...updates };
+}
+
+/**
+ * Reset content map to initial state from file.
+ */
+export function resetContent(): void {
+  contentMap = parseMarkdownSections(cvContentRaw);
 }
