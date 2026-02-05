@@ -37,7 +37,16 @@ Single cx33 node (4 vCPU, 8GB RAM). K3s system uses ~1GB RAM, leaving ~7GB for w
 
 ## Initial Setup
 
-### 1. Add KUBECONFIG to GitHub Secrets
+### 1. Install cert-manager
+
+```bash
+kube-cv apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
+
+# Wait for pods to be ready
+kube-cv wait --for=condition=ready pod -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=120s
+```
+
+### 2. Add KUBECONFIG to GitHub Secrets
 
 ```bash
 # Encode kubeconfig
@@ -45,7 +54,7 @@ cat ./kubeconfig | base64 | pbcopy
 # Add as KUBECONFIG secret in GitHub repo settings
 ```
 
-### 2. Deploy
+### 3. Deploy
 
 ```bash
 # Deploy PostgreSQL
