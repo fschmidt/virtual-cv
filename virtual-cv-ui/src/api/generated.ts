@@ -144,7 +144,7 @@ export const getGetNodeUrl = (id: string,) => {
 
   
 
-  return `/api/cv/nodes/${id}`
+  return `/cv/nodes/${id}`
 }
 
 export const getNode = async (id: string, options?: RequestInit): Promise<getNodeResponse> => {
@@ -177,7 +177,7 @@ export const getUpdateNodeUrl = (id: string,) => {
 
   
 
-  return `/api/cv/nodes/${id}`
+  return `/cv/nodes/${id}`
 }
 
 export const updateNode = async (id: string,
@@ -212,7 +212,7 @@ export const getDeleteNodeUrl = (id: string,) => {
 
   
 
-  return `/api/cv/nodes/${id}`
+  return `/cv/nodes/${id}`
 }
 
 export const deleteNode = async (id: string, options?: RequestInit): Promise<deleteNodeResponse> => {
@@ -245,7 +245,7 @@ export const getCreateSkillUrl = () => {
 
   
 
-  return `/api/cv/nodes/skill`
+  return `/cv/nodes/skill`
 }
 
 export const createSkill = async (createSkillCommand: CreateSkillCommand, options?: RequestInit): Promise<createSkillResponse> => {
@@ -279,7 +279,7 @@ export const getCreateSkillGroupUrl = () => {
 
   
 
-  return `/api/cv/nodes/skill-group`
+  return `/cv/nodes/skill-group`
 }
 
 export const createSkillGroup = async (createSkillGroupCommand: CreateSkillGroupCommand, options?: RequestInit): Promise<createSkillGroupResponse> => {
@@ -313,7 +313,7 @@ export const getCreateProfileUrl = () => {
 
   
 
-  return `/api/cv/nodes/profile`
+  return `/cv/nodes/profile`
 }
 
 export const createProfile = async (createProfileCommand: CreateProfileCommand, options?: RequestInit): Promise<createProfileResponse> => {
@@ -347,7 +347,7 @@ export const getCreateItemUrl = () => {
 
   
 
-  return `/api/cv/nodes/item`
+  return `/cv/nodes/item`
 }
 
 export const createItem = async (createItemCommand: CreateItemCommand, options?: RequestInit): Promise<createItemResponse> => {
@@ -381,7 +381,7 @@ export const getCreateCategoryUrl = () => {
 
   
 
-  return `/api/cv/nodes/category`
+  return `/cv/nodes/category`
 }
 
 export const createCategory = async (createCategoryCommand: CreateCategoryCommand, options?: RequestInit): Promise<createCategoryResponse> => {
@@ -415,7 +415,7 @@ export const getHealthUrl = () => {
 
   
 
-  return `/api/health`
+  return `/health`
 }
 
 export const health = async ( options?: RequestInit): Promise<healthResponse> => {
@@ -448,7 +448,7 @@ export const getGetAllNodesUrl = () => {
 
   
 
-  return `/api/cv`
+  return `/cv`
 }
 
 export const getAllNodes = async ( options?: RequestInit): Promise<getAllNodesResponse> => {
@@ -488,7 +488,7 @@ export const getSearchUrl = (params: SearchParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/cv/search?${stringifiedParams}` : `/api/cv/search`
+  return stringifiedParams.length > 0 ? `/cv/search?${stringifiedParams}` : `/cv/search`
 }
 
 export const search = async (params: SearchParams, options?: RequestInit): Promise<searchResponse> => {
@@ -521,7 +521,7 @@ export const getGetChildrenUrl = (id: string,) => {
 
   
 
-  return `/api/cv/nodes/${id}/children`
+  return `/cv/nodes/${id}/children`
 }
 
 export const getChildren = async (id: string, options?: RequestInit): Promise<getChildrenResponse> => {
