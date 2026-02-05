@@ -81,25 +81,23 @@ class CvNodeRepositoryTest {
     }
 
     @Test
-    void shouldSoftDeleteNode() {
+    void shouldHardDeleteNode() {
         // Given
         String id = uniqueId();
         CvNode node = new CvNode(id, NodeType.SKILL, "To Delete");
         repository.save(node);
-        assertThat(repository.findActiveById(id)).isPresent();
-
-        // When - soft delete
-        node.setDeleted(true);
-        repository.save(node);
-
-        // Then - not found in active queries
-        assertThat(repository.findActiveById(id)).isEmpty();
-        // But still exists in database
         assertThat(repository.findById(id)).isPresent();
+
+        // When - hard delete
+        repository.delete(node);
+
+        // Then - completely gone from database
+        assertThat(repository.findById(id)).isEmpty();
+        assertThat(repository.findByIdAsDto(id)).isEmpty();
     }
 
     @Test
-    void shouldSearchActiveNodes() {
+    void shouldSearchNodes() {
         // Given - use unique search term
         String uniqueTerm = "UniqueSearchTerm" + UUID.randomUUID().toString().substring(0, 4);
 
@@ -107,75 +105,167 @@ class CvNodeRepositoryTest {
         node1.setDescription("Development with " + uniqueTerm);
         repository.save(node1);
 
-        CvNode deletedNode = new CvNode(uniqueId(), NodeType.SKILL, uniqueTerm + " Legacy");
-        deletedNode.setDeleted(true);
-        repository.save(deletedNode);
+        CvNode node2 = new CvNode(uniqueId(), NodeType.SKILL, "Unrelated Node");
+        repository.save(node2);
 
         // When
-        List<CvNodeDto> results = repository.searchActive(uniqueTerm);
+        List<CvNodeDto> results = repository.search(uniqueTerm);
 
-        // Then - should only find non-deleted node
+        // Then - should find the matching node
         assertThat(results).hasSize(1);
         assertThat(results.get(0).label()).contains(uniqueTerm);
     }
 
     @Test
-    void shouldFindAllActiveNodes() {
+    void shouldFindAllNodes() {
         // Given - count before and after
-        int countBefore = repository.findAllActive().size();
+        int countBefore = repository.findAllAsDto().size();
 
-        CvNode active = new CvNode(uniqueId(), NodeType.PROFILE, "New Active Node");
-        repository.save(active);
+        CvNode node1 = new CvNode(uniqueId(), NodeType.PROFILE, "New Node 1");
+        repository.save(node1);
 
-        CvNode deleted = new CvNode(uniqueId(), NodeType.PROFILE, "New Deleted Node");
-        deleted.setDeleted(true);
-        repository.save(deleted);
+        CvNode node2 = new CvNode(uniqueId(), NodeType.PROFILE, "New Node 2");
+        repository.save(node2);
 
         // When
-        List<CvNodeDto> results = repository.findAllActive();
+        List<CvNodeDto> results = repository.findAllAsDto();
 
-        // Then - should have one more than before (the active one)
-        assertThat(results).hasSize(countBefore + 1);
+        // Then - should have two more than before
+        assertThat(results).hasSize(countBefore + 2);
     }
 
     @Test
-    void shouldFindActiveChildren() {
+    void shouldFindChildren() {
         // Given
         String parentId = uniqueId();
         CvNode parent = new CvNode(parentId, NodeType.PROFILE, "Test Profile");
         repository.save(parent);
 
-        CvNode activeChild = new CvNode(uniqueId(), NodeType.CATEGORY, "Active Child");
-        activeChild.setParent(parent);
-        repository.save(activeChild);
+        CvNode child1 = new CvNode(uniqueId(), NodeType.CATEGORY, "Child 1");
+        child1.setParent(parent);
+        repository.save(child1);
 
-        CvNode deletedChild = new CvNode(uniqueId(), NodeType.CATEGORY, "Deleted Child");
-        deletedChild.setParent(parent);
-        deletedChild.setDeleted(true);
-        repository.save(deletedChild);
+        CvNode child2 = new CvNode(uniqueId(), NodeType.CATEGORY, "Child 2");
+        child2.setParent(parent);
+        repository.save(child2);
 
         // When
-        List<CvNodeDto> children = repository.findActiveByParentId(parentId);
+        List<CvNodeDto> children = repository.findByParentIdAsDto(parentId);
 
         // Then
-        assertThat(children).hasSize(1);
-        assertThat(children.get(0).label()).isEqualTo("Active Child");
+        assertThat(children).hasSize(2);
     }
 
     @Test
     void shouldLoadSeedData() {
         // Verify seed data from V3 migration is loaded
-        Optional<CvNodeDto> profile = repository.findActiveById("profile");
+        Optional<CvNodeDto> profile = repository.findByIdAsDto("profile");
         assertThat(profile).isPresent();
         assertThat(profile.get().label()).isEqualTo("Frank Schmidt");
         assertThat(profile.get().type()).isEqualTo(NodeType.PROFILE);
 
         // Verify categories exist
-        List<CvNodeDto> categories = repository.findActiveByParentId("profile");
+        List<CvNodeDto> categories = repository.findByParentIdAsDto("profile");
         assertThat(categories).hasSizeGreaterThanOrEqualTo(4);
 
         // Verify skills exist
-        List<CvNodeDto> backendSkills = repository.findActiveByParentId("skill-backend");
+        List<CvNodeDto> backendSkills = repository.findByParentIdAsDto("skill-backend");
         assertThat(backendSkills).hasSizeGreaterThanOrEqualTo(4);
+    }
+
+    // ============================================================
+    // Draft Mode Tests
+    // ============================================================
+
+    @Test
+    void shouldStoreIsDraftInAttributes() {
+        // Given
+        String id = uniqueId();
+        CvNode node = new CvNode(id, NodeType.ITEM, "Draft Item");
+        node.setAttributes(Map.of(
+            "isDraft", true,
+            "company", "Test Company"
+        ));
+
+        // When
+        repository.save(node);
+
+        // Then
+        Optional<CvNode> found = repository.findById(id);
+        assertThat(found).isPresent();
+        assertThat(found.get().getAttributes()).containsEntry("isDraft", true);
+        assertThat(found.get().getAttributes()).containsEntry("company", "Test Company");
+    }
+
+    @Test
+    void shouldPublishNodeBySettingIsDraftFalse() {
+        // Given - create a draft node
+        String id = uniqueId();
+        CvNode node = new CvNode(id, NodeType.ITEM, "Draft Item");
+        node.setAttributes(Map.of(
+            "isDraft", true,
+            "company", "Test Company",
+            "dateRange", "2020-2024"
+        ));
+        repository.save(node);
+
+        // When - publish by merging isDraft: false
+        CvNode saved = repository.findById(id).orElseThrow();
+        Map<String, Object> updatedAttrs = new java.util.HashMap<>(saved.getAttributes());
+        updatedAttrs.put("isDraft", false);
+        saved.setAttributes(updatedAttrs);
+        repository.save(saved);
+
+        // Then - isDraft is false but other attributes are preserved
+        CvNode published = repository.findById(id).orElseThrow();
+        assertThat(published.getAttributes()).containsEntry("isDraft", false);
+        assertThat(published.getAttributes()).containsEntry("company", "Test Company");
+        assertThat(published.getAttributes()).containsEntry("dateRange", "2020-2024");
+    }
+
+    @Test
+    void shouldReturnDraftNodesInAllQueries() {
+        // Given - draft nodes are stored like any other node
+        String id = uniqueId();
+        CvNode draftNode = new CvNode(id, NodeType.SKILL, "Draft Skill");
+        draftNode.setAttributes(Map.of("isDraft", true));
+        repository.save(draftNode);
+
+        // Then - draft nodes are returned in all queries (filtering happens in frontend)
+        assertThat(repository.findById(id)).isPresent();
+        assertThat(repository.findByIdAsDto(id)).isPresent();
+
+        // Search should also find draft nodes
+        List<CvNodeDto> searchResults = repository.search("Draft Skill");
+        assertThat(searchResults).anyMatch(dto -> dto.id().equals(id));
+    }
+
+    @Test
+    void shouldPreserveAttributesWhenUpdatingDraftStatus() {
+        // Given - a node with multiple attributes
+        String id = uniqueId();
+        CvNode node = new CvNode(id, NodeType.ITEM, "Job Title");
+        node.setAttributes(Map.of(
+            "company", "Acme Corp",
+            "dateRange", "2020-Present",
+            "location", "Berlin",
+            "isDraft", true
+        ));
+        repository.save(node);
+
+        // When - update only isDraft (simulating publish)
+        CvNode existing = repository.findById(id).orElseThrow();
+        Map<String, Object> attrs = new java.util.HashMap<>(existing.getAttributes());
+        attrs.put("isDraft", false);
+        existing.setAttributes(attrs);
+        repository.save(existing);
+
+        // Then - all other attributes are preserved
+        CvNode updated = repository.findById(id).orElseThrow();
+        Map<String, Object> updatedAttrs = updated.getAttributes();
+        assertThat(updatedAttrs).containsEntry("company", "Acme Corp");
+        assertThat(updatedAttrs).containsEntry("dateRange", "2020-Present");
+        assertThat(updatedAttrs).containsEntry("location", "Berlin");
+        assertThat(updatedAttrs).containsEntry("isDraft", false);
     }
 }

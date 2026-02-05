@@ -116,8 +116,8 @@ function Flow() {
   // Rebuild graph when data or selection changes
   useEffect(() => {
     if (cvData && viewMode === 'graph') {
-      setNodes(buildNodes(cvData, selectedId, contentMap, true, INSPECTOR_MODE));
-      setEdges(buildEdges(cvData, selectedId));
+      setNodes(buildNodes(cvData, selectedId, contentMap, true, INSPECTOR_MODE, editModeEnabled));
+      setEdges(buildEdges(cvData, selectedId, editModeEnabled));
 
       // Animate to fit view after state change
       // First call: quick adjustment
@@ -130,7 +130,7 @@ function Flow() {
         fitView({ padding: 0.3, duration: ANIMATION_DURATION });
       }, 350);
     }
-  }, [cvData, selectedId, viewMode, contentMap, setNodes, setEdges, fitView]);
+  }, [cvData, selectedId, viewMode, contentMap, setNodes, setEdges, fitView, editModeEnabled]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -225,6 +225,22 @@ function Flow() {
     }
   }, [showToast, showError]);
 
+  // Handle publishing/unpublishing a node
+  const onPublishNode = useCallback(async (id: string, publish: boolean) => {
+    try {
+      await cvService.updateNode(id, {
+        attributes: { isDraft: !publish } as unknown as UpdateNodeCommand['attributes'],
+      });
+      // Refresh data after publish
+      const newData = await cvService.getCVData();
+      setCvData(newData);
+      showToast(publish ? 'Node published' : 'Node unpublished', 'success');
+    } catch (error) {
+      showError(error);
+      throw error; // Re-throw so InspectorPanel can also handle it
+    }
+  }, [showToast, showError]);
+
   if (!cvData) {
     return (
       <div className="app loading">
@@ -261,6 +277,7 @@ function Flow() {
             onSave={onSaveNode}
             onDelete={onDeleteNode}
             onCreate={onCreateNode}
+            onPublish={onPublishNode}
           />
         </>
       ) : (

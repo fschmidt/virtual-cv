@@ -28,6 +28,7 @@ export interface CVNodeBase {
   label: string;
   description?: string;
   tags?: string[];
+  isDraft?: boolean;
 }
 
 // Profile node - the central business card

@@ -192,6 +192,43 @@
   border-color: rgba(167, 139, 250, 0.6);
 }
 
+/* ===========================================
+   DRAFT STATE - Visual indicator for unpublished nodes
+   =========================================== */
+.graph-node.draft {
+  opacity: 0.85;
+  border-style: dashed !important;
+}
+
+.graph-node.draft::after {
+  content: 'DRAFT';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  background: #f59e0b;
+  color: white;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 10;
+}
+
+.graph-node.quickview.draft::after,
+.graph-node.dormant.draft::after {
+  top: -6px;
+  right: -6px;
+  font-size: 0.45rem;
+  padding: 1px 4px;
+}
+
+.graph-node.quickview.draft,
+.graph-node.dormant.draft {
+  border-color: rgba(245, 158, 11, 0.6) !important;
+}
+
 .graph-node.skill.quickview,
 .graph-node.skill-group.quickview {
   border-color: rgba(102, 126, 234, 0.3);
@@ -1458,6 +1495,46 @@
   background: rgba(239, 68, 68, 0.3);
   color: white;
   border-color: rgba(239, 68, 68, 0.5);
+}
+
+.inspector-publish-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.inspector-publish-btn.draft {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.inspector-publish-btn.draft:hover {
+  background: rgba(245, 158, 11, 0.4);
+  color: white;
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.inspector-publish-btn.published {
+  background: rgba(52, 211, 153, 0.2);
+  color: #34d399;
+}
+
+.inspector-publish-btn.published:hover {
+  background: rgba(52, 211, 153, 0.4);
+  color: white;
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+.inspector-publish-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .inspector-edit-form {

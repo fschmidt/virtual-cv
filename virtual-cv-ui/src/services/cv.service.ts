@@ -58,6 +58,7 @@ function mapApiNodeToFrontend(dto: CvNodeDto): CVNode {
     parentId: dto.parentId ?? null,
     label: dto.label ?? '',
     description: dto.description,
+    isDraft: attr<boolean>(attributes, 'isDraft') ?? false,
   };
 
   switch (type) {

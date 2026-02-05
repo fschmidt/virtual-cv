@@ -137,6 +137,12 @@ function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeD
         (command as Record<string, unknown>).proficiencyLevel = formData.proficiencyLevel;
       }
 
+      // New nodes always start as drafts
+      (command as Record<string, unknown>).attributes = {
+        ...((command as Record<string, unknown>).attributes as Record<string, unknown> | undefined),
+        isDraft: true,
+      };
+
       await onCreate(selectedType, command);
       onClose();
     } catch (err) {

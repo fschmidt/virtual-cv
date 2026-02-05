@@ -28,6 +28,8 @@ export interface GraphNodeData {
   icon?: string;
   // Whether this node is currently selected
   selected?: boolean;
+  // Whether this node is a draft (only visible in edit mode)
+  isDraft?: boolean;
   // Index signature for React Flow compatibility
   [key: string]: unknown;
 }

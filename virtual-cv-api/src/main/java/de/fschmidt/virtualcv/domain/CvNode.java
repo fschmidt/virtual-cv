@@ -43,9 +43,6 @@ public class CvNode {
     @Column(name = "position_y")
     private Integer positionY;
 
-    @Column(nullable = false)
-    private boolean deleted = false;
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -136,14 +133,6 @@ public class CvNode {
 
     public void setPositionY(Integer positionY) {
         this.positionY = positionY;
-    }
-
-    public boolean isDeleted() {
-        return deleted;
-    }
-
-    public void setDeleted(boolean deleted) {
-        this.deleted = deleted;
     }
 
     public Instant getCreatedAt() {

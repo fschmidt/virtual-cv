@@ -19,17 +19,16 @@ public interface CvNodeRepository extends JpaRepository<CvNode, String> {
 
     List<CvNode> findByType(CvNode.NodeType type);
 
-    // DTO queries (for reads) - excludes soft-deleted
+    // DTO queries (for reads)
     @Query("""
             SELECT new de.fschmidt.virtualcv.dto.CvNodeDto(
                 n.id, n.type, n.parent.id, n.label, n.description,
                 n.attributes, n.positionX, n.positionY
             )
             FROM CvNode n
-            WHERE n.deleted = false
             ORDER BY n.createdAt
             """)
-    List<CvNodeDto> findAllActive();
+    List<CvNodeDto> findAllAsDto();
 
     @Query("""
             SELECT new de.fschmidt.virtualcv.dto.CvNodeDto(
@@ -37,9 +36,9 @@ public interface CvNodeRepository extends JpaRepository<CvNode, String> {
                 n.attributes, n.positionX, n.positionY
             )
             FROM CvNode n
-            WHERE n.id = :id AND n.deleted = false
+            WHERE n.id = :id
             """)
-    Optional<CvNodeDto> findActiveById(String id);
+    Optional<CvNodeDto> findByIdAsDto(String id);
 
     @Query("""
             SELECT new de.fschmidt.virtualcv.dto.CvNodeDto(
@@ -47,10 +46,10 @@ public interface CvNodeRepository extends JpaRepository<CvNode, String> {
                 n.attributes, n.positionX, n.positionY
             )
             FROM CvNode n
-            WHERE n.parent.id = :parentId AND n.deleted = false
+            WHERE n.parent.id = :parentId
             ORDER BY n.createdAt
             """)
-    List<CvNodeDto> findActiveByParentId(String parentId);
+    List<CvNodeDto> findByParentIdAsDto(String parentId);
 
     @Query("""
             SELECT new de.fschmidt.virtualcv.dto.CvNodeDto(
@@ -58,9 +57,8 @@ public interface CvNodeRepository extends JpaRepository<CvNode, String> {
                 n.attributes, n.positionX, n.positionY
             )
             FROM CvNode n
-            WHERE n.deleted = false
-            AND (LOWER(n.label) LIKE LOWER(CONCAT('%', :query, '%'))
-                 OR LOWER(n.description) LIKE LOWER(CONCAT('%', :query, '%')))
+            WHERE LOWER(n.label) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(n.description) LIKE LOWER(CONCAT('%', :query, '%'))
             """)
-    List<CvNodeDto> searchActive(String query);
+    List<CvNodeDto> search(String query);
 }

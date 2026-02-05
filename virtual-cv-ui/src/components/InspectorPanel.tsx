@@ -1,6 +1,6 @@
 import { memo, useRef, useCallback, useState, useEffect } from 'react';
 import Markdown from 'react-markdown';
-import { Pencil, Trash2, Plus, X } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Eye, EyeOff } from 'lucide-react';
 import SectionIcon from './SectionIcon';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 import CreateNodeDialog from './CreateNodeDialog';
@@ -29,6 +29,7 @@ interface InspectorPanelProps {
   onSave?: (id: string, updates: UpdateNodeCommand, content?: string) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
   onCreate?: (type: CVNodeType, data: CreateNodeCommand) => Promise<void>;
+  onPublish?: (id: string, publish: boolean) => Promise<void>;
 }
 
 // Type guards
@@ -148,6 +149,20 @@ function DeleteButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+// Publish button component
+function PublishButton({ isDraft, onClick, disabled }: { isDraft: boolean; onClick: () => void; disabled?: boolean }) {
+  return (
+    <button
+      className={`inspector-publish-btn ${isDraft ? 'draft' : 'published'}`}
+      onClick={onClick}
+      title={isDraft ? 'Publish' : 'Unpublish'}
+      disabled={disabled}
+    >
+      {isDraft ? <Eye size={18} strokeWidth={2} /> : <EyeOff size={18} strokeWidth={2} />}
+    </button>
+  );
+}
+
 function InspectorPanel({
   selectedId,
   cvData,
@@ -158,6 +173,7 @@ function InspectorPanel({
   onSave,
   onDelete,
   onCreate,
+  onPublish,
 }: InspectorPanelProps) {
   // Swipe to close tracking
   const touchStartY = useRef<number | null>(null);
@@ -175,6 +191,9 @@ function InspectorPanel({
 
   // Create mode state
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  // Publish mode state
+  const [isPublishing, setIsPublishing] = useState(false);
 
   // Get node early to use in effects
   const node = selectedId ? cvData.nodes.find((n) => n.id === selectedId) : null;
@@ -214,6 +233,22 @@ function InspectorPanel({
       setIsDeleting(false);
     }
   }, [selectedId, onDelete, onClose]);
+
+  // Handle publish/unpublish
+  const handlePublish = useCallback(async () => {
+    if (!selectedId || !onPublish || !node) return;
+
+    setIsPublishing(true);
+    try {
+      // If currently draft, publish it (isDraft becomes false)
+      // If currently published, unpublish it (isDraft becomes true)
+      await onPublish(selectedId, node.isDraft ?? false);
+    } catch {
+      // Error is handled by App.tsx via toast
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [selectedId, onPublish, node]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (panelRef.current && panelRef.current.scrollTop <= 0) {
@@ -410,9 +445,16 @@ function InspectorPanel({
     return (
       <div className="inspector-panel" {...touchHandlers}>
         {closeButton}
-        {editModeEnabled && onSave && (
+        {editModeEnabled && (onSave || onPublish) && (
           <div className="inspector-action-buttons">
-            <EditButton onClick={handleStartEdit} />
+            {onSave && <EditButton onClick={handleStartEdit} />}
+            {onPublish && (
+              <PublishButton
+                isDraft={node.isDraft ?? false}
+                onClick={handlePublish}
+                disabled={isPublishing}
+              />
+            )}
           </div>
         )}
         <div className="inspector-profile">
@@ -562,9 +604,16 @@ function InspectorPanel({
   return (
     <div className="inspector-panel" {...touchHandlers}>
       {closeButton}
-      {editModeEnabled && (onSave || onDelete) && (
+      {editModeEnabled && (onSave || onDelete || onPublish) && (
         <div className="inspector-action-buttons">
           {onSave && <EditButton onClick={handleStartEdit} />}
+          {onPublish && (
+            <PublishButton
+              isDraft={node.isDraft ?? false}
+              onClick={handlePublish}
+              disabled={isPublishing}
+            />
+          )}
           {onDelete && canDelete && (
             <DeleteButton onClick={() => setIsDeleteDialogOpen(true)} />
           )}
