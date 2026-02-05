@@ -12,7 +12,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/cv")
+@RequestMapping("/cv")
 public class CvController {
 
     private final CvNodeService service;
@@ -50,31 +50,31 @@ public class CvController {
     @PostMapping("/nodes/profile")
     public ResponseEntity<CvNodeDto> createProfile(@Valid @RequestBody CreateProfileCommand command) {
         CvNodeDto created = service.create(command);
-        return ResponseEntity.created(URI.create("/api/cv/nodes/" + created.id())).body(created);
+        return ResponseEntity.created(URI.create("/cv/nodes/" + created.id())).body(created);
     }
 
     @PostMapping("/nodes/category")
     public ResponseEntity<CvNodeDto> createCategory(@Valid @RequestBody CreateCategoryCommand command) {
         CvNodeDto created = service.create(command);
-        return ResponseEntity.created(URI.create("/api/cv/nodes/" + created.id())).body(created);
+        return ResponseEntity.created(URI.create("/cv/nodes/" + created.id())).body(created);
     }
 
     @PostMapping("/nodes/item")
     public ResponseEntity<CvNodeDto> createItem(@Valid @RequestBody CreateItemCommand command) {
         CvNodeDto created = service.create(command);
-        return ResponseEntity.created(URI.create("/api/cv/nodes/" + created.id())).body(created);
+        return ResponseEntity.created(URI.create("/cv/nodes/" + created.id())).body(created);
     }
 
     @PostMapping("/nodes/skill-group")
     public ResponseEntity<CvNodeDto> createSkillGroup(@Valid @RequestBody CreateSkillGroupCommand command) {
         CvNodeDto created = service.create(command);
-        return ResponseEntity.created(URI.create("/api/cv/nodes/" + created.id())).body(created);
+        return ResponseEntity.created(URI.create("/cv/nodes/" + created.id())).body(created);
     }
 
     @PostMapping("/nodes/skill")
     public ResponseEntity<CvNodeDto> createSkill(@Valid @RequestBody CreateSkillCommand command) {
         CvNodeDto created = service.create(command);
-        return ResponseEntity.created(URI.create("/api/cv/nodes/" + created.id())).body(created);
+        return ResponseEntity.created(URI.create("/cv/nodes/" + created.id())).body(created);
     }
 
     // Commands - Update (generic)

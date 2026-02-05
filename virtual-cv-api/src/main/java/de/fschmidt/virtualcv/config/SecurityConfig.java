@@ -17,8 +17,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 // Public read endpoints
-                .requestMatchers("/api/cv/**").permitAll()
-                .requestMatchers("/api/health").permitAll()
+                .requestMatchers("/cv/**").permitAll()
+                .requestMatchers("/health").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 // OpenAPI/Swagger
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
