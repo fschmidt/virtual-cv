@@ -78,12 +78,13 @@ function Flow() {
   const [contentMap, setContentMap] = useState<ContentMap>({});
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFeaturePopupOpen, setIsFeaturePopupOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [nodes, setNodes] = useNodesState(initialNodes);
   const [edges, setEdges] = useEdgesState(initialEdges);
   const { fitView } = useReactFlow();
 
-  // Feature flags
-  const editModeEnabled = useMemo(() => isFeatureEnabled(Feature.EDIT_MODE), []);
+  // Feature flags - controls visibility of edit toggle button
+  const showEditToggle = useMemo(() => isFeatureEnabled(Feature.EDIT_MODE), []);
 
   // Toast notifications
   const { showToast, showError } = useToast();
@@ -116,8 +117,8 @@ function Flow() {
   // Rebuild graph when data or selection changes
   useEffect(() => {
     if (cvData && viewMode === 'graph') {
-      setNodes(buildNodes(cvData, selectedId, contentMap, true, INSPECTOR_MODE, editModeEnabled));
-      setEdges(buildEdges(cvData, selectedId, editModeEnabled));
+      setNodes(buildNodes(cvData, selectedId, contentMap, true, INSPECTOR_MODE, editMode));
+      setEdges(buildEdges(cvData, selectedId, editMode));
 
       // Animate to fit view after state change
       // First call: quick adjustment
@@ -130,7 +131,7 @@ function Flow() {
         fitView({ padding: 0.3, duration: ANIMATION_DURATION });
       }, 350);
     }
-  }, [cvData, selectedId, viewMode, contentMap, setNodes, setEdges, fitView, editModeEnabled]);
+  }, [cvData, selectedId, viewMode, contentMap, setNodes, setEdges, fitView, editMode]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -251,7 +252,13 @@ function Flow() {
 
   return (
     <div className={`app ${selectedId && viewMode === 'graph' ? 'panel-open' : ''}`}>
-      <ViewToggle view={viewMode} onChange={setViewMode} />
+      <ViewToggle
+        view={viewMode}
+        onChange={setViewMode}
+        showEditToggle={showEditToggle}
+        editMode={editMode}
+        onEditModeChange={setEditMode}
+      />
       {viewMode === 'graph' ? (
         <>
           <div className="graph-container">
@@ -273,7 +280,7 @@ function Flow() {
             contentMap={contentMap}
             sections={CV_SECTIONS}
             onClose={onHomeClick}
-            editModeEnabled={editModeEnabled}
+            editModeEnabled={editMode}
             onSave={onSaveNode}
             onDelete={onDeleteNode}
             onCreate={onCreateNode}

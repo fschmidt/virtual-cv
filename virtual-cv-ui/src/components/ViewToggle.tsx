@@ -1,14 +1,17 @@
 import { memo, useState, useEffect, useCallback } from 'react';
-import { Network, FileText, Menu, X } from 'lucide-react';
+import { Network, FileText, Menu, X, Pencil } from 'lucide-react';
 
 export type ViewMode = 'graph' | 'cv';
 
 interface ViewToggleProps {
   view: ViewMode;
   onChange: (view: ViewMode) => void;
+  showEditToggle?: boolean;
+  editMode?: boolean;
+  onEditModeChange?: (editMode: boolean) => void;
 }
 
-function ViewToggle({ view, onChange }: ViewToggleProps) {
+function ViewToggle({ view, onChange, showEditToggle, editMode, onEditModeChange }: ViewToggleProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -76,6 +79,19 @@ function ViewToggle({ view, onChange }: ViewToggleProps) {
           <FileText size={18} />
           {isMobile && <span>CV</span>}
         </button>
+        {showEditToggle && (
+          <>
+            <div className="floating-menu-divider" />
+            <button
+              className={`floating-menu-btn edit-toggle ${editMode ? 'active' : ''}`}
+              onClick={() => onEditModeChange?.(!editMode)}
+              title={editMode ? 'Exit Edit Mode' : 'Enter Edit Mode'}
+            >
+              <Pencil size={18} />
+              {isMobile && <span>Edit</span>}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

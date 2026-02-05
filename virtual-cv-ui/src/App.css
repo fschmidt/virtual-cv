@@ -660,6 +660,13 @@
   justify-content: center;
   gap: 8px;
   transition: all 0.2s ease;
+  outline: none;
+}
+
+.floating-menu-btn:focus,
+.floating-menu-btn:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .floating-menu-btn:hover {
@@ -674,6 +681,23 @@
 
 .floating-menu-btn span {
   display: none;
+}
+
+.floating-menu-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 6px 4px;
+}
+
+.floating-menu-btn.edit-toggle.active {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.2);
+}
+
+.floating-menu-btn.edit-toggle:hover {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
 }
 
 /* ===========================================
@@ -1814,6 +1838,7 @@
     cursor: pointer;
     backdrop-filter: blur(8px);
     transition: all 0.2s ease;
+    outline: none;
   }
 
   .floating-menu-toggle:hover {
@@ -1847,6 +1872,12 @@
     display: inline;
     font-size: 0.9rem;
     font-weight: 500;
+  }
+
+  .floating-menu-divider {
+    width: 100%;
+    height: 1px;
+    margin: 4px 0;
   }
 
   @keyframes slideDown {
