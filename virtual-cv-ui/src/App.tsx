@@ -226,7 +226,7 @@ function Flow() {
   }, []);
 
   // Handle saving node edits
-  const onSaveNode = useCallback(async (id: string, updates: UpdateNodeCommand, _content?: string) => {
+  const onSaveNode = useCallback(async (id: string, updates: UpdateNodeCommand) => {
     try {
       await cvService.updateNode(id, updates);
       // Refresh data after save
@@ -290,12 +290,14 @@ function Flow() {
 
   // Handle node drag start - disable position sync during drag for performance
   const onNodeDragStart = useCallback(() => {
+    // eslint-disable-next-line react-hooks/immutability -- refs are mutable containers by design; isDraggingRef is a performance optimization flag
     isDraggingRef.current = true;
   }, []);
 
   // Handle node drag end - persist position to backend
   const onNodeDragStop = useCallback(
     async (_event: React.MouseEvent, node: Node) => {
+      // eslint-disable-next-line react-hooks/immutability -- refs are mutable containers by design; isDraggingRef is a performance optimization flag
       isDraggingRef.current = false;
       // Sync positions after drag ends
       nodePositionsRef.current = new Map(nodes.map((n) => [n.id, n.position]));

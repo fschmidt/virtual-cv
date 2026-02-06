@@ -91,7 +91,7 @@ public class CvController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Commands - Delete (soft)
+    // Commands - Delete (hard delete with cascade to children)
 
     @DeleteMapping("/nodes/{id}")
     public ResponseEntity<Void> deleteNode(@PathVariable String id) {

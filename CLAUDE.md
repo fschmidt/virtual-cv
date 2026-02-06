@@ -58,19 +58,25 @@ virtual-cv/
 │       │   ├── fetcher.ts          # Custom fetch with error handling
 │       │   └── errors.ts           # Typed API errors
 │       ├── components/
-│       │   ├── GraphNode.tsx       # Unified node component
-│       │   ├── InspectorPanel.tsx  # Side panel for node details/editing
-│       │   ├── ViewToggle.tsx      # Graph/CV/Edit mode toggle
-│       │   ├── CreateNodeDialog.tsx
-│       │   ├── SearchDialog.tsx
-│       │   └── Toast.tsx
+│       │   ├── GraphNode.tsx           # Unified node component (3 states)
+│       │   ├── InspectorPanel.tsx      # Side panel for node details/editing
+│       │   ├── ViewToggle.tsx          # Graph/CV/Edit mode toggle
+│       │   ├── CreateNodeDialog.tsx    # Node creation dialog
+│       │   ├── DeleteConfirmDialog.tsx # Delete confirmation modal
+│       │   ├── SearchDialog.tsx        # Cmd+K search
+│       │   ├── StandardCVView.tsx      # Linear CV view
+│       │   ├── FeatureTogglePopup.tsx  # Dev feature flag toggle
+│       │   ├── SectionIcon.tsx         # Category SVG icons
+│       │   ├── LoadingSkeleton.tsx     # Loading placeholder
+│       │   └── Toast.tsx              # Toast notifications
 │       ├── types/
 │       │   ├── cv.types.ts         # Domain model
 │       │   └── graph.types.ts      # UI types
 │       ├── services/
-│       │   ├── cv.service.ts       # API service wrapper
+│       │   ├── cv.service.ts       # API service wrapper with caching
 │       │   ├── cv.mapper.ts        # Data → React Flow transform
-│       │   └── content.service.ts  # Content helpers
+│       │   ├── content.service.ts  # Markdown content parsing
+│       │   └── layout.service.ts   # Node size calculations
 │       ├── utils/
 │       │   └── feature-flags.ts    # Feature toggle system
 │       ├── App.tsx
@@ -81,12 +87,19 @@ virtual-cv/
 │       ├── service/CvNodeService.java
 │       ├── repository/CvNodeRepository.java
 │       ├── domain/CvNode.java
-│       └── command/              # Create/Update DTOs
+│       ├── dto/                   # CvDataDto, CvNodeDto
+│       ├── command/               # Create/Update command records
+│       └── config/                # SecurityConfig, CorsConfig
 ├── docs/
-│   ├── backlog.md              # Current backlog and roadmap
-│   └── initial-roadmap.md      # Original project roadmap
+│   ├── architecture.md        # Architecture overview & assessment
+│   ├── audit-report.md        # Quality & sustainability audit
+│   ├── backlog.md             # Current backlog and roadmap
+│   ├── improvement-plan.md    # Prioritized improvement roadmap
+│   └── initial-roadmap.md     # Original project roadmap (read-only)
+├── k8s/                       # Kubernetes deployment manifests
 └── .github/workflows/
-    └── deploy.yml              # GitHub Pages deployment
+    ├── deploy.yml             # Frontend → GitHub Pages
+    └── deploy-api.yml         # Backend → Docker → K8s
 ```
 
 ## Commands

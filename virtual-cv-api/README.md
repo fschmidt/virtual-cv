@@ -5,9 +5,9 @@ Spring Boot REST API for the Virtual CV application.
 ## Tech Stack
 
 - Java 21
-- Spring Boot 3.5.x
+- Spring Boot 3.5.10
 - Spring Data JPA
-- PostgreSQL
+- PostgreSQL 16
 - Flyway migrations
 - Testcontainers
 
@@ -48,18 +48,18 @@ Once running, the API is available at `http://localhost:9823`:
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/cv` | Get all CV nodes |
-| GET | `/api/cv/nodes/{id}` | Get single node |
-| GET | `/api/cv/nodes/{id}/children` | Get children |
-| GET | `/api/cv/search?q=` | Search nodes |
-| POST | `/api/cv/nodes/profile` | Create profile |
-| POST | `/api/cv/nodes/category` | Create category |
-| POST | `/api/cv/nodes/item` | Create item |
-| POST | `/api/cv/nodes/skill-group` | Create skill group |
-| POST | `/api/cv/nodes/skill` | Create skill |
-| PUT | `/api/cv/nodes/{id}` | Update node |
-| DELETE | `/api/cv/nodes/{id}` | Soft delete node |
-| GET | `/api/health` | Health check |
+| GET | `/cv` | Get all CV nodes |
+| GET | `/cv/nodes/{id}` | Get single node |
+| GET | `/cv/nodes/{id}/children` | Get children |
+| GET | `/cv/search?q=` | Search nodes |
+| POST | `/cv/nodes/profile` | Create profile |
+| POST | `/cv/nodes/category` | Create category |
+| POST | `/cv/nodes/item` | Create item |
+| POST | `/cv/nodes/skill-group` | Create skill group |
+| POST | `/cv/nodes/skill` | Create skill |
+| PUT | `/cv/nodes/{id}` | Update node |
+| DELETE | `/cv/nodes/{id}` | Delete node (hard delete with cascade) |
+| GET | `/health` | Health check |
 
 ### Test
 
@@ -68,8 +68,7 @@ Once running, the API is available at `http://localhost:9823`:
 ./gradlew test
 
 # Test the API
-curl http://localhost:9823/api/cv | jq '.nodes | length'
-# Should return: 27
+curl http://localhost:9823/cv | jq '.nodes | length'
 ```
 
 ### Stop

@@ -1,0 +1,46 @@
+name: Build UI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'virtual-cv-ui/**'
+      - '.github/workflows/build-ui.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'virtual-cv-ui/**'
+      - '.github/workflows/build-ui.yml'
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: virtual-cv-ui/package-lock.json
+
+      - name: Install dependencies
+        working-directory: virtual-cv-ui
+        run: npm ci
+
+      - name: Lint
+        working-directory: virtual-cv-ui
+        run: npm run lint
+
+      - name: Build
+        working-directory: virtual-cv-ui
+        run: npm run build
+
+      - name: Upload build artifact
+        if: github.event_name == 'workflow_call'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-dist
+          path: virtual-cv-ui/dist

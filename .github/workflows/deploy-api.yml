@@ -1,28 +1,18 @@
 name: Build and Deploy API
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'virtual-cv-api/**'
-      - '.github/workflows/deploy-api.yml'
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Target environment'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - staging
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/virtual-cv-api
 
 jobs:
-  build-and-push:
+  build:
+    uses: ./.github/workflows/build-api.yml
+
+  docker-push:
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -63,7 +53,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    needs: build-and-push
+    needs: docker-push
     runs-on: ubuntu-latest
 
     steps:

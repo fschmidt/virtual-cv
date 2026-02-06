@@ -89,19 +89,15 @@ function SearchDialog({
     return matches.slice(0, 10); // Limit to 10 results
   }, [query, cvData.nodes, contentMap, sections]);
 
-  // Focus input when dialog opens
+  // Reset form state and focus input when dialog opens
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: resetting form state when dialog opens is a controlled transition, not a cascading render
       setQuery('');
       setSelectedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isOpen]);
-
-  // Reset selection when results change
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [results]);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -160,7 +156,10 @@ function SearchDialog({
             className="search-input"
             placeholder="Search nodes..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelectedIndex(0);
+            }}
             onKeyDown={handleKeyDown}
           />
           <kbd className="search-shortcut">ESC</kbd>
