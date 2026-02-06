@@ -481,6 +481,49 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 
 ---
 
+## Milestone 8: Coding Guidelines & Guardrails (P2)
+
+**Theme:** Codify the patterns established in Milestones 6–7 so they are enforced automatically and documented for future contributors.
+**Branch:** `improvement/coding-guidelines`
+
+### 8.1 Document Component & CSS Conventions in CLAUDE.md
+
+- **ID:** MAINT-08a
+- **Title:** Add coding conventions section to CLAUDE.md
+- **Priority:** P2
+- **Effort:** S (< 1 hour)
+- **Risk if deferred:** Refactored code drifts back toward monolithic patterns as new features are added. New contributors (or AI agents) have no reference for expected patterns.
+- **Risk if done wrong:** Overly prescriptive guidelines create friction. Keep rules few, concrete, and tied to real issues found in the audit.
+- **Acceptance criteria:**
+  - CLAUDE.md includes a "Coding Conventions" section covering:
+    - Component file size guideline (~300 lines max; split when orchestrating multiple concerns)
+    - Always use `DialogOverlay` for new dialogs (from 6.2)
+    - Always use CSS custom properties for colors — never hardcode hex/rgba
+    - Co-locate component CSS with component files (from 7.2)
+    - Shared form fields via `TypeSpecificFields` for node-type-specific inputs (from 6.4)
+    - `getNodeTypeLabel()` and similar utilities live in `utils/`, not duplicated per component
+  - Conventions are concise (bullet points, not essays)
+- **Dependencies:** Milestones 6 and 7 (patterns must exist before documenting them)
+- **Files affected:**
+  - `CLAUDE.md`
+
+### 8.2 Add Automated Guardrails via ESLint
+
+- **ID:** MAINT-08b
+- **Title:** Add ESLint rules to enforce file size and import conventions
+- **Priority:** P3
+- **Effort:** S (< 1 hour)
+- **Risk if deferred:** Guidelines without enforcement are suggestions. Developers bypass them under time pressure.
+- **Risk if done wrong:** Overly strict rules (e.g., hard 300-line limit) could block legitimate files. Use warnings, not errors, for soft limits.
+- **Acceptance criteria:**
+  - ESLint `max-lines` rule configured as warning at 350 lines (soft) / error at 500 lines (hard)
+  - `npm run lint` passes on the current codebase (post Milestone 6 refactoring)
+- **Dependencies:** 8.1 (conventions documented first), Milestone 6 (files already refactored to fit limits)
+- **Files affected:**
+  - `virtual-cv-ui/eslint.config.js`
+
+---
+
 ## Summary
 
 | Milestone | Theme | Priority | Items | Total Effort |
@@ -492,6 +535,7 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 | 5 | Operational Readiness | P1 | 2 | M+S |
 | 6 | Component Refactoring | P2 | 5 | M+S+M+S+S |
 | 7 | CSS Modernization | P2 | 2 | S+L |
+| 8 | Coding Guidelines & Guardrails | P2/P3 | 2 | S+S |
 
 ### Audit Coverage
 
