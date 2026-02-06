@@ -9,6 +9,8 @@ stringData:
   SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/virtualcv
   SPRING_DATASOURCE_USERNAME: virtualcv
   SPRING_DATASOURCE_PASSWORD: changeme-in-production
+  GOOGLE_CLIENT_ID: changeme-in-production
+  AUTH_ALLOWED_EMAILS: changeme-in-production
 
 ---
 apiVersion: apps/v1

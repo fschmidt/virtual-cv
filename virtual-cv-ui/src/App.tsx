@@ -23,6 +23,7 @@ import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap, type
 import type { CVData, CVNodeType } from './types';
 import { CV_SECTIONS } from './types';
 import { Feature, isFeatureEnabled } from './utils/feature-flags';
+import { authService, type AuthUser } from './services/auth.service';
 
 const nodeTypes = {
   graphNode: GraphNode,
@@ -113,8 +114,21 @@ function Flow() {
     }
   }, [nodes]);
 
-  // Feature flags - controls visibility of edit toggle button
-  const showEditToggle = useMemo(() => isFeatureEnabled(Feature.EDIT_MODE), []);
+  // Auth state
+  const [authUser, setAuthUser] = useState<AuthUser | null>(authService.getUser());
+
+  useEffect(() => {
+    return authService.onAuthChange((user) => {
+      setAuthUser(user);
+      if (!user) setEditMode(false);
+    });
+  }, []);
+
+  // Feature flags - controls visibility of edit toggle button (requires auth)
+  const showEditToggle = useMemo(
+    () => isFeatureEnabled(Feature.EDIT_MODE) && authUser !== null,
+    [authUser]
+  );
 
   // Toast notifications
   const { showToast, showError } = useToast();
@@ -383,6 +397,8 @@ function Flow() {
       <FeatureTogglePopup
         isOpen={isFeaturePopupOpen}
         onClose={() => setIsFeaturePopupOpen(false)}
+        authUser={authUser}
+        onSignOut={() => authService.signOut()}
       />
       {/* Create node dialog triggered from graph + button */}
       {createDialogParentId && cvData.nodes.find((n) => n.id === createDialogParentId) && (

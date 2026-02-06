@@ -1,15 +1,19 @@
 import { memo, useEffect, useRef } from 'react';
-import { Pencil, Bug, FlaskConical, X } from 'lucide-react';
+import { Pencil, Bug, FlaskConical, X, LogOut } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import {
   Feature,
   getAllFeatures,
   setFeatureEnabled,
   type FeatureConfig,
 } from '../utils/feature-flags';
+import { authService, type AuthUser } from '../services/auth.service';
 
 interface FeatureTogglePopupProps {
   isOpen: boolean;
   onClose: () => void;
+  authUser: AuthUser | null;
+  onSignOut: () => void;
 }
 
 // Icon component for feature items
@@ -30,7 +34,7 @@ function FeatureIcon({ icon }: { icon?: FeatureConfig['icon'] }) {
   }
 }
 
-function FeatureTogglePopup({ isOpen, onClose }: FeatureTogglePopupProps) {
+function FeatureTogglePopup({ isOpen, onClose, authUser, onSignOut }: FeatureTogglePopupProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const features = getAllFeatures();
 
@@ -96,6 +100,38 @@ function FeatureTogglePopup({ isOpen, onClose }: FeatureTogglePopupProps) {
               </div>
             </label>
           ))}
+        </div>
+
+        <div className="feature-toggle-divider" />
+
+        <div className="feature-toggle-auth">
+          <h3>Authentication</h3>
+          {authUser ? (
+            <div className="auth-user-info">
+              <img src={authUser.picture} alt="" className="auth-avatar" referrerPolicy="no-referrer" />
+              <div className="auth-details">
+                <span className="auth-name">{authUser.name}</span>
+                <span className="auth-email">{authUser.email}</span>
+              </div>
+              <button className="auth-signout-btn" onClick={onSignOut} title="Sign out">
+                <LogOut size={16} strokeWidth={2} />
+              </button>
+            </div>
+          ) : (
+            <div className="auth-signin">
+              <p className="auth-hint">Sign in to enable editing</p>
+              <GoogleLogin
+                onSuccess={(response) => {
+                  if (response.credential) {
+                    authService.handleCredentialResponse(response.credential);
+                  }
+                }}
+                theme="filled_black"
+                size="large"
+                shape="rectangular"
+              />
+            </div>
+          )}
         </div>
 
         <div className="feature-toggle-footer">

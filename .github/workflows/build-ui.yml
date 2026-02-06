@@ -36,6 +36,8 @@ jobs:
 
       - name: Build
         working-directory: virtual-cv-ui
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
         run: npm run build
 
       - name: Upload build artifact

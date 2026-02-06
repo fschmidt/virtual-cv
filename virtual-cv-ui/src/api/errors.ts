@@ -42,6 +42,22 @@ export class ConflictError extends ApiError {
   }
 }
 
+// 401 Unauthorized
+export class AuthenticationError extends ApiError {
+  constructor(message: string = 'Authentication required') {
+    super(message, 401, 'AUTHENTICATION_REQUIRED');
+    this.name = 'AuthenticationError';
+  }
+}
+
+// 403 Forbidden
+export class AuthorizationError extends ApiError {
+  constructor(message: string = 'Not authorized to perform this action') {
+    super(message, 403, 'FORBIDDEN');
+    this.name = 'AuthorizationError';
+  }
+}
+
 // Network failures (no connection, timeout, etc.)
 export class NetworkError extends ApiError {
   constructor(message: string = 'Network error - please check your connection') {
@@ -52,6 +68,12 @@ export class NetworkError extends ApiError {
 
 // Helper to extract user-friendly message from any error
 export function getErrorMessage(error: unknown): string {
+  if (error instanceof AuthenticationError) {
+    return 'Please sign in to perform this action';
+  }
+  if (error instanceof AuthorizationError) {
+    return 'You are not authorized to perform this action';
+  }
   if (error instanceof ValidationError && error.fields) {
     const fieldErrors = Object.values(error.fields);
     if (fieldErrors.length > 0) {
