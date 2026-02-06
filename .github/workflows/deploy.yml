@@ -40,6 +40,10 @@ jobs:
         working-directory: virtual-cv-ui
         run: npm ci
 
+      - name: Lint
+        working-directory: virtual-cv-ui
+        run: npm run lint
+
       - name: Build
         working-directory: virtual-cv-ui
         run: npm run build
