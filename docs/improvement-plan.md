@@ -334,10 +334,10 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 
 ---
 
-## Milestone 6: Code Maintainability (P2)
+## Milestone 6: Component Refactoring (P2)
 
-**Theme:** Reduce complexity in the largest files.
-**Branch:** `improvement/maintainability`
+**Theme:** Eliminate duplication and reduce component complexity. Must be completed before CSS restructuring so component boundaries are settled first.
+**Branch:** `improvement/component-refactoring`
 
 ### 6.1 Extract Graph State Hook from App.tsx
 
@@ -357,7 +357,70 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
   - `virtual-cv-ui/src/hooks/useGraphState.ts` (new)
   - `virtual-cv-ui/src/App.tsx`
 
-### 6.2 Fix `customFetch` Type Safety
+### 6.2 Extract Shared Dialog Infrastructure
+
+- **ID:** MAINT-02d
+- **Title:** Create reusable `DialogOverlay` component and `useDialogKeyboard` hook
+- **Priority:** P2
+- **Effort:** S (< 1 hour)
+- **Risk if deferred:** Every new dialog duplicates the same overlay, focus management, and Escape key handling. CreateNodeDialog, DeleteConfirmDialog, and SearchDialog all implement identical patterns independently.
+- **Risk if done wrong:** Abstraction that doesn't fit all 3 dialogs forces workarounds. Keep the API minimal.
+- **Acceptance criteria:**
+  - `DialogOverlay` component handles: overlay click-to-close, click propagation stop, focus management, Escape key dismissal
+  - All 3 existing dialogs refactored to use the shared component
+  - No behavioral changes — all dialogs work identically to before
+  - `npm run build` and `npm run lint` pass
+- **Dependencies:** None
+- **Files affected:**
+  - `virtual-cv-ui/src/components/DialogOverlay.tsx` (new)
+  - `virtual-cv-ui/src/components/CreateNodeDialog.tsx`
+  - `virtual-cv-ui/src/components/DeleteConfirmDialog.tsx`
+  - `virtual-cv-ui/src/components/SearchDialog.tsx`
+
+### 6.3 Split InspectorPanel into Sub-Components
+
+- **ID:** MAINT-02e
+- **Title:** Extract view and edit sub-components from InspectorPanel
+- **Priority:** P2
+- **Effort:** M (1–4 hours)
+- **Risk if deferred:** InspectorPanel at 696 lines mixes 4 responsibilities: profile view, profile edit form, generic node view, and generic node edit form. Adding new node types or editing features amplifies this.
+- **Risk if done wrong:** Over-extracting creates too many small files with prop-drilling. Keep InspectorPanel as the orchestrator; extract rendering, not state.
+- **Acceptance criteria:**
+  - Extract `NodeViewProfile` (profile display), `NodeEditProfile` (profile edit form), `NodeView` (generic node display), `NodeEditForm` (generic node edit form)
+  - InspectorPanel reduced to under 250 lines of orchestration logic
+  - All inspector interactions work identically (view, edit, save, delete, publish)
+  - `npm run build` and `npm run lint` pass
+- **Dependencies:** 6.2 (dialog infrastructure exists for any sub-dialogs)
+- **Files affected:**
+  - `virtual-cv-ui/src/components/InspectorPanel.tsx`
+  - `virtual-cv-ui/src/components/NodeViewProfile.tsx` (new)
+  - `virtual-cv-ui/src/components/NodeEditProfile.tsx` (new)
+  - `virtual-cv-ui/src/components/NodeView.tsx` (new)
+  - `virtual-cv-ui/src/components/NodeEditForm.tsx` (new)
+
+### 6.4 Extract Shared Type-Specific Form Fields
+
+- **ID:** MAINT-02f
+- **Title:** Deduplicate type-specific form fields between CreateNodeDialog and InspectorPanel edit forms
+- **Priority:** P2
+- **Effort:** S (< 1 hour)
+- **Risk if deferred:** Category section select, item fields (company, dateRange, location), and skill proficiency select are implemented twice with near-identical markup. Any field change must be applied in two places.
+- **Risk if done wrong:** Shared field component that doesn't handle create vs. edit differences (e.g., required vs. optional) makes both consumers worse.
+- **Acceptance criteria:**
+  - `TypeSpecificFields` component renders the correct fields for each node type
+  - Used by both `CreateNodeDialog` and the InspectorPanel edit forms (from 6.3)
+  - Shared `getNodeTypeLabel()` utility replaces duplicate implementations in SearchDialog and CreateNodeDialog
+  - `npm run build` and `npm run lint` pass
+- **Dependencies:** 6.3 (InspectorPanel sub-components exist to consume shared fields)
+- **Files affected:**
+  - `virtual-cv-ui/src/components/TypeSpecificFields.tsx` (new)
+  - `virtual-cv-ui/src/utils/node-utils.ts` (new — shared `getNodeTypeLabel`)
+  - `virtual-cv-ui/src/components/CreateNodeDialog.tsx`
+  - `virtual-cv-ui/src/components/NodeEditForm.tsx` (from 6.3)
+  - `virtual-cv-ui/src/components/NodeEditProfile.tsx` (from 6.3)
+  - `virtual-cv-ui/src/components/SearchDialog.tsx`
+
+### 6.5 Fix `customFetch` Type Safety
 
 - **ID:** F3 (from architecture assessment)
 - **Title:** Fix unsafe `as T` cast in fetcher.ts
@@ -375,6 +438,49 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 
 ---
 
+## Milestone 7: CSS Modernization (P2)
+
+**Theme:** Replace monolithic stylesheet with themeable, component-scoped CSS. Must follow Milestone 6 so component boundaries are settled.
+**Branch:** `improvement/css-modernization`
+
+### 7.1 Extract CSS Custom Properties for Theme Colors
+
+- **ID:** MAINT-02b / F7
+- **Title:** Replace hardcoded color values with CSS custom properties
+- **Priority:** P2
+- **Effort:** S (< 1 hour)
+- **Risk if deferred:** Adding the planned light/dark theme toggle (`backlog.md:62`) would require finding and replacing 100+ hardcoded color values scattered across 2,431 lines. CSS custom properties make this a single `:root` swap.
+- **Risk if done wrong:** Missing a hardcoded value produces visual inconsistency. Must verify all color occurrences are covered.
+- **Acceptance criteria:**
+  - `:root` block defines all theme colors as custom properties (background, surface, accent, text, border variants)
+  - All hardcoded color values in `App.css` replaced with `var(--*)` references
+  - Visual appearance unchanged (same colors, just indirected)
+  - `npm run build` passes
+- **Dependencies:** None
+- **Files affected:**
+  - `virtual-cv-ui/src/App.css`
+
+### 7.2 Split App.css into Component-Scoped Files
+
+- **ID:** MAINT-02c / F7
+- **Title:** Break monolithic stylesheet into per-component CSS files
+- **Priority:** P2
+- **Effort:** L (4+ hours)
+- **Risk if deferred:** `App.css` remains at 2,431 lines (34% of the frontend codebase). Print stylesheet (830 lines) and mobile overrides (645 lines) duplicate large portions of the base rules. Merge conflicts are frequent in any file this large.
+- **Risk if done wrong:** CSS specificity changes when moving to scoped files. Class name collisions possible without CSS modules. Must verify all visual states (graph, inspector, search, edit mode, mobile, print).
+- **Acceptance criteria:**
+  - Base styles, print styles, and mobile styles co-located per component
+  - `App.css` reduced to global resets, `:root` variables, and shared utilities only (< 200 lines)
+  - Component CSS files match the final component structure from Milestone 6
+  - No visual regressions across all views (graph, CV, edit mode, mobile, print)
+  - `npm run build` and `npm run lint` pass
+- **Dependencies:** 7.1 (CSS custom properties in place first), Milestone 6 (component boundaries settled)
+- **Files affected:**
+  - `virtual-cv-ui/src/App.css` (reduce to globals only)
+  - `virtual-cv-ui/src/components/*.css` (new, one per component)
+
+---
+
 ## Summary
 
 | Milestone | Theme | Priority | Items | Total Effort |
@@ -384,7 +490,8 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 | 3 | Frontend Test Foundation | P1 | 3 | S+M+S |
 | 4 | Backend Test Expansion | P1 | 3 | M+M+S |
 | 5 | Operational Readiness | P1 | 2 | M+S |
-| 6 | Code Maintainability | P2 | 2 | M+S |
+| 6 | Component Refactoring | P2 | 5 | M+S+M+S+S |
+| 7 | CSS Modernization | P2 | 2 | S+L |
 
 ### Audit Coverage
 
@@ -400,7 +507,7 @@ Every Critical and High finding from [audit-report.md](audit-report.md) is addre
 | TEST-03 | High | 4 | 4.1, 4.2 |
 | CICD-02 | High | 1 | 1.3 |
 | MAINT-01 | High | 1 | 1.1 |
-| MAINT-02 | High | 6 | 6.1 |
+| MAINT-02 | High | 6 + 7 | 6.1, 6.2, 6.3, 6.4, 7.1, 7.2 |
 | SEC-02 | High | 2 | 2.3 |
 | SEC-03 | High | 2 | 2.2 |
 
