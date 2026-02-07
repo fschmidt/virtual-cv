@@ -5,7 +5,14 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9823';
 
 const WRITE_METHODS = new Set(['POST', 'PUT', 'DELETE', 'PATCH']);
 
-export const customFetch = async <T>(
+// Shape returned by customFetch — matches Orval's generated response types
+export interface FetchResponse<D = unknown> {
+  data: D;
+  status: number;
+  headers: Headers;
+}
+
+export const customFetch = async <T extends FetchResponse>(
   url: string,
   options?: RequestInit
 ): Promise<T> => {
