@@ -1,0 +1,395 @@
+/* ===========================================
+   GRAPH NODE - Base
+   =========================================== */
+.graph-node {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  /* Center all nodes on their position point */
+  transform: translate(-50%, -50%);
+}
+
+/* ===========================================
+   DORMANT STATE - Small dot
+   =========================================== */
+.graph-node.dormant {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(var(--rgb-white), 0.15);
+  border: 1px solid rgba(var(--rgb-white), 0.25);
+}
+
+.graph-node.dormant:hover {
+  background: rgba(var(--rgb-accent), 0.5);
+  border-color: rgba(var(--rgb-accent), 0.8);
+  transform: translate(-50%, -50%) scale(1.5);
+  box-shadow: 0 0 12px rgba(var(--rgb-accent), 0.4);
+}
+
+/* ===========================================
+   QUICKVIEW STATE - Circular previews
+   =========================================== */
+.graph-node.quickview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-alt) 100%);
+  border: 1px solid rgba(var(--rgb-white), 0.1);
+  color: rgba(var(--rgb-white), 0.9);
+  font-size: 0.7rem;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(var(--rgb-black), 0.2);
+}
+
+.graph-node.quickview:hover {
+  border-color: rgba(var(--rgb-accent), 0.5);
+  box-shadow: 0 6px 20px rgba(var(--rgb-black), 0.3);
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+/* Selected node highlight */
+.graph-node.selected {
+  border-color: rgba(var(--rgb-accent-soft), 0.8) !important;
+  box-shadow: 0 0 0 3px rgba(var(--rgb-accent-soft), 0.3), 0 8px 24px rgba(var(--rgb-accent), 0.4) !important;
+}
+
+.graph-node.quickview.selected {
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.graph-node.profile.quickview.selected .profile-photo {
+  border-color: rgba(var(--rgb-accent-soft), 0.6);
+}
+
+/* ===========================================
+   DRAFT STATE - Visual indicator for unpublished nodes
+   =========================================== */
+.graph-node.draft {
+  opacity: 0.85;
+  border-style: dashed !important;
+}
+
+.graph-node.draft::after {
+  content: 'DRAFT';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  background: var(--color-warning);
+  color: white;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 10;
+}
+
+.graph-node.quickview.draft::after,
+.graph-node.dormant.draft::after {
+  top: -6px;
+  right: -6px;
+  font-size: 0.45rem;
+  padding: 1px 4px;
+}
+
+.graph-node.quickview.draft,
+.graph-node.dormant.draft {
+  border-color: rgba(var(--rgb-warning), 0.6) !important;
+}
+
+/* ===========================================
+   EDIT MODE - Draggable nodes and add button
+   =========================================== */
+.graph-node.edit-mode {
+  cursor: grab;
+  transition: none; /* Disable transition for instant drag response */
+}
+
+.graph-node.edit-mode:active {
+  cursor: grabbing;
+}
+
+/* Add child button - appears on quickview nodes in edit mode */
+.add-child-btn {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid var(--bg-body);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 20;
+  padding: 0;
+}
+
+.add-child-btn:hover {
+  background: var(--color-accent-hover);
+  transform: scale(1.15);
+}
+
+.add-child-btn:active {
+  transform: scale(1.05);
+}
+
+.graph-node.skill.quickview,
+.graph-node.skill-group.quickview {
+  border-color: rgba(var(--rgb-accent), 0.3);
+}
+
+.graph-node.profile.quickview {
+  padding: 0.5rem;
+}
+
+.graph-node.profile.quickview .profile-photo {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(var(--rgb-white), 0.3);
+}
+
+/* ===========================================
+   DETAILED STATE - Full content
+   =========================================== */
+.graph-node.detailed {
+  background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-alt) 100%);
+  border: 1px solid rgba(var(--rgb-white), 0.1);
+  color: white;
+  box-shadow: 0 12px 32px rgba(var(--rgb-black), 0.3);
+}
+
+.graph-node.category.detailed {
+  border-radius: 12px;
+  padding: 18px 28px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Category nodes with icons */
+.graph-node.category {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.graph-node.category .category-icon {
+  color: var(--color-accent);
+}
+
+.graph-node.category.quickview {
+  width: 5.5rem;
+  height: 5.5rem;
+}
+
+.graph-node.item.detailed {
+  border-radius: 10px;
+  padding: 16px 24px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: pre-line;
+  text-align: center;
+}
+
+.graph-node.skill-group.detailed {
+  border-radius: 10px;
+  padding: 16px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-color: rgba(var(--rgb-accent), 0.3);
+}
+
+.graph-node.skill.detailed {
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* ===========================================
+   PROFILE NODE - Business Card
+   =========================================== */
+.graph-node.profile.detailed {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.business-card {
+  background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-alt) 100%);
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 320px;
+  max-width: 360px;
+  box-shadow: 0 20px 40px rgba(var(--rgb-black), 0.3), 0 0 0 1px rgba(var(--rgb-white), 0.1);
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  color: white;
+}
+
+.business-card-photo img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(var(--rgb-white), 0.2);
+  box-shadow: 0 4px 12px rgba(var(--rgb-black), 0.3);
+}
+
+.business-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.business-card-name {
+  margin: 0 0 4px 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.business-card-title {
+  margin: 0 0 2px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-alt));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.business-card-subtitle {
+  margin: 0 0 12px 0;
+  font-size: 0.8rem;
+  color: rgba(var(--rgb-white), 0.7);
+}
+
+.business-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: rgba(var(--rgb-white), 0.6);
+}
+
+.business-card-experience {
+  color: var(--color-accent-soft);
+  font-weight: 500;
+}
+
+.business-card-location::before {
+  content: '📍 ';
+}
+
+.business-card-email::before {
+  content: '✉️ ';
+}
+
+/* ===========================================
+   NODE LABEL
+   =========================================== */
+.node-label {
+  white-space: pre-line;
+  line-height: 1.2;
+}
+
+/* ===========================================
+   MARKDOWN CONTENT
+   =========================================== */
+.markdown-content {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: rgba(var(--rgb-white), 0.9);
+  max-width: 400px;
+}
+
+.markdown-content h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-alt));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.markdown-content h3 {
+  margin: 12px 0 6px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(var(--rgb-white), 0.95);
+}
+
+.markdown-content p {
+  margin: 0 0 10px 0;
+  color: rgba(var(--rgb-white), 0.8);
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 8px 0;
+  padding-left: 18px;
+  color: rgba(var(--rgb-white), 0.8);
+}
+
+.markdown-content li {
+  margin: 4px 0;
+}
+
+.markdown-content strong {
+  color: white;
+  font-weight: 600;
+}
+
+.markdown-content code {
+  background: rgba(var(--rgb-accent), 0.2);
+  color: var(--color-accent-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.markdown-content a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.markdown-content a:hover {
+  text-decoration: underline;
+}
+
+/* Business card about section */
+.business-card-about {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(var(--rgb-white), 0.1);
+}
+
+.business-card-about p {
+  font-size: 0.75rem;
+  margin: 0 0 6px 0;
+}
+
+/* Detailed nodes with markdown - adjust sizing */
+.graph-node.item.detailed .markdown-content,
+.graph-node.skill.detailed .markdown-content,
+.graph-node.skill-group.detailed .markdown-content,
+.graph-node.category.detailed .markdown-content {
+  text-align: left;
+  white-space: normal;
+}

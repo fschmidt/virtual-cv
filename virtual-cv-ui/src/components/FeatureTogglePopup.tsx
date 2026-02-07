@@ -8,6 +8,7 @@ import {
   type FeatureConfig,
 } from '../utils/feature-flags';
 import { authService, type AuthUser } from '../services/auth.service';
+import './FeatureTogglePopup.css';
 
 interface FeatureTogglePopupProps {
   isOpen: boolean;

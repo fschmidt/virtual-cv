@@ -3,6 +3,7 @@ import Markdown from 'react-markdown';
 import SectionIcon from './SectionIcon';
 import type { CVData, CVNode, CVProfileNode, CVCategoryNode, CV_SECTIONS } from '../types';
 import type { ContentMap } from '../services';
+import './StandardCVView.css';
 
 interface StandardCVViewProps {
   cvData: CVData;

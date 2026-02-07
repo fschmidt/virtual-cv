@@ -1,5 +1,6 @@
 import { memo, useState, useEffect, useCallback } from 'react';
 import { Network, FileText, Menu, X, Pencil } from 'lucide-react';
+import './ViewToggle.css';
 
 export type ViewMode = 'graph' | 'cv';
 

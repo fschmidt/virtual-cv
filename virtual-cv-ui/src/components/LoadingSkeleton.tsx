@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import './LoadingSkeleton.css';
 
 /**
  * Loading skeleton that mimics the graph layout

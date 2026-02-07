@@ -1,6 +1,7 @@
 import { memo, useEffect, useState, useCallback, createContext, useContext, type ReactNode } from 'react';
 import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { getErrorMessage } from '../api/errors';
+import './Toast.css';
 
 type ToastType = 'success' | 'error' | 'info';
 

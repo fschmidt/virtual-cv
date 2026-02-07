@@ -4,6 +4,7 @@ import Markdown from 'react-markdown';
 import { Plus } from 'lucide-react';
 import SectionIcon from './SectionIcon';
 import type { NodeState, CVNodeType, GraphNodeData } from '../types';
+import './GraphNode.css';
 
 // Re-export types for backward compatibility
 export type { NodeState };

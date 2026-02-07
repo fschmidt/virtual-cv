@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { AlertTriangle, AlertCircle, X } from 'lucide-react';
 import DialogOverlay from './DialogOverlay';
+import './DeleteConfirmDialog.css';
 
 interface DeleteConfirmDialogProps {
   isOpen: boolean;

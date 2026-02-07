@@ -1,0 +1,215 @@
+/* ===========================================
+   FEATURE TOGGLE POPUP
+   =========================================== */
+.feature-toggle-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(var(--rgb-black), 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  animation: fadeIn 0.15s ease;
+}
+
+.feature-toggle-dialog {
+  width: 100%;
+  max-width: 400px;
+  background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-alt) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(var(--rgb-white), 0.15);
+  box-shadow: 0 20px 60px rgba(var(--rgb-black), 0.5);
+  overflow: hidden;
+  outline: none;
+}
+
+.feature-toggle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(var(--rgb-white), 0.1);
+}
+
+.feature-toggle-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.feature-toggle-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(var(--rgb-white), 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.feature-toggle-close:hover {
+  background: rgba(var(--rgb-white), 0.1);
+  color: white;
+}
+
+.feature-toggle-list {
+  padding: 12px 0;
+}
+
+.feature-toggle-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.feature-toggle-item:hover {
+  background: rgba(var(--rgb-accent), 0.1);
+}
+
+.feature-toggle-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: var(--color-accent);
+}
+
+.feature-toggle-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feature-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: white;
+}
+
+.feature-toggle-label svg {
+  flex-shrink: 0;
+}
+
+.feature-toggle-description {
+  font-size: 0.8rem;
+  color: rgba(var(--rgb-white), 0.5);
+  line-height: 1.4;
+}
+
+.feature-toggle-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(var(--rgb-white), 0.1);
+  background: rgba(var(--rgb-black), 0.2);
+}
+
+.feature-toggle-footer span {
+  font-size: 0.75rem;
+  color: rgba(var(--rgb-white), 0.4);
+}
+
+.feature-toggle-footer kbd {
+  background: rgba(var(--rgb-white), 0.1);
+  color: rgba(var(--rgb-white), 0.5);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-family: inherit;
+  border: none;
+}
+
+/* Auth section in feature toggle popup */
+.feature-toggle-divider {
+  height: 1px;
+  background: rgba(var(--rgb-white), 0.1);
+  margin: 4px 20px;
+}
+
+.feature-toggle-auth {
+  padding: 12px 20px;
+}
+
+.feature-toggle-auth h3 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(var(--rgb-white), 0.4);
+  margin: 0 0 12px 0;
+  font-weight: 500;
+}
+
+.auth-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.auth-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.auth-name {
+  font-size: 0.85rem;
+  color: rgba(var(--rgb-white), 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-email {
+  font-size: 0.75rem;
+  color: rgba(var(--rgb-white), 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-signout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: 1px solid rgba(var(--rgb-white), 0.15);
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(var(--rgb-white), 0.6);
+  cursor: pointer;
+}
+
+.auth-signout-btn:hover {
+  background: rgba(var(--rgb-white), 0.05);
+  border-color: rgba(var(--rgb-white), 0.25);
+  color: rgba(var(--rgb-white), 0.9);
+}
+
+.auth-signin .auth-hint {
+  font-size: 0.8rem;
+  color: rgba(var(--rgb-white), 0.4);
+  margin: 0 0 12px 0;
+}
