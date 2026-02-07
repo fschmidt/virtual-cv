@@ -111,6 +111,7 @@ cd virtual-cv-ui
 npm install          # install dependencies
 npm run dev          # start dev server (http://localhost:5173)
 npm run build        # production build (outputs to dist/)
+npm test             # run tests (Vitest)
 npm run lint         # run ESLint
 npm run preview      # preview production build
 npm run generate-api # regenerate API client from OpenAPI spec
@@ -167,6 +168,23 @@ Backend (PostgreSQL) → REST API → Generated TS Client → cvService → Reac
 
 Toggle features via `Ctrl+Shift+D`:
 - `EDIT_MODE` - Shows edit toggle button in floating menu
+
+## Testing
+
+All new features and bug fixes must follow test-driven development (TDD):
+1. Write failing tests first that define the expected behavior
+2. Implement the minimum code to make tests pass
+3. Refactor while keeping tests green
+
+### Frontend
+- Test runner: Vitest (`npm test` in `virtual-cv-ui/`)
+- Tests live in `__tests__/` directories next to the code they test
+- Use `@testing-library/react` for component tests, plain Vitest for unit tests
+
+### Backend
+- Test runner: JUnit 5 via Gradle (`./gradlew test` in `virtual-cv-api/`)
+- Repository tests use Testcontainers (requires Docker)
+- Use `@WebMvcTest` for controller tests, plain JUnit for service unit tests
 
 ## Design Principles
 
