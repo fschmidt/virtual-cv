@@ -1,0 +1,156 @@
+/* ===========================================
+   CREATE NODE DIALOG
+   =========================================== */
+.create-node-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(var(--rgb-black), 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  animation: fadeIn 0.15s ease;
+}
+
+.create-node-dialog {
+  width: 100%;
+  max-width: 450px;
+  max-height: 80vh;
+  background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-alt) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(var(--rgb-white), 0.15);
+  box-shadow: 0 20px 60px rgba(var(--rgb-black), 0.5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.2s ease;
+}
+
+.create-node-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(var(--rgb-white), 0.1);
+  flex-shrink: 0;
+}
+
+.create-node-header h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.create-node-close {
+  background: transparent;
+  border: none;
+  color: rgba(var(--rgb-white), 0.5);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.create-node-close:hover:not(:disabled) {
+  color: white;
+  background: rgba(var(--rgb-white), 0.1);
+}
+
+.create-node-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.create-node-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.create-node-type-selector {
+  margin-bottom: 20px;
+}
+
+.type-selector-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(var(--rgb-white), 0.5);
+  margin-bottom: 8px;
+}
+
+.type-selector-options {
+  display: flex;
+  gap: 8px;
+}
+
+.type-option {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid rgba(var(--rgb-white), 0.15);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(var(--rgb-white), 0.7);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.type-option:hover:not(:disabled) {
+  background: rgba(var(--rgb-white), 0.05);
+  color: white;
+}
+
+.type-option.active {
+  background: rgba(var(--rgb-accent), 0.2);
+  border-color: rgba(var(--rgb-accent), 0.5);
+  color: var(--color-accent-soft);
+}
+
+.type-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.create-node-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(var(--rgb-white), 0.1);
+  flex-shrink: 0;
+}
+
+/* Add Child Button in Inspector */
+.inspector-add-child-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  margin-top: 20px;
+  border: 1px dashed rgba(var(--rgb-accent), 0.4);
+  border-radius: 8px;
+  background: rgba(var(--rgb-accent), 0.1);
+  color: var(--color-accent-soft);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.inspector-add-child-btn:hover {
+  background: rgba(var(--rgb-accent), 0.2);
+  border-color: rgba(var(--rgb-accent), 0.6);
+  color: white;
+}

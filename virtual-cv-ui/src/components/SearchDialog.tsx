@@ -3,6 +3,7 @@ import SectionIcon from './SectionIcon';
 import DialogOverlay from './DialogOverlay';
 import type { CVData, CVNode, CV_SECTIONS } from '../types';
 import type { ContentMap } from '../services';
+import './SearchDialog.css';
 
 interface SearchDialogProps {
   isOpen: boolean;

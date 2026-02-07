@@ -6,6 +6,7 @@ import { CV_SECTIONS } from '../types';
 import type { CreateNodeCommand } from '../services';
 import { getErrorMessage } from '../api/errors';
 import { getNodeTypeLabel } from '../utils/node-utils';
+import './CreateNodeDialog.css';
 
 interface CreateNodeDialogProps {
   isOpen: boolean;

@@ -10,6 +10,7 @@ import type { CVNode, CVProfileNode, CVData, CVSection, CVNodeType } from '../ty
 import { getParentChain, getSectionIcon } from '../utils/node-utils';
 import type { ContentMap, UpdateNodeCommand, CreateNodeCommand } from '../services';
 import { setNodeContent } from '../services';
+import './InspectorPanel.css';
 
 // Swipe threshold in pixels
 const SWIPE_THRESHOLD = 80;

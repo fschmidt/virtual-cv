@@ -1,0 +1,582 @@
+/* ===========================================
+   INSPECTOR PANEL (Side Panel)
+   =========================================== */
+.inspector-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 400px;
+  background: linear-gradient(135deg, var(--bg-surface-dark) 0%, var(--bg-surface) 100%);
+  border-left: 1px solid rgba(var(--rgb-white), 0.1);
+  box-shadow: -10px 0 40px rgba(var(--rgb-black), 0.4);
+  z-index: 20;
+  padding: 24px;
+  overflow-y: auto;
+  animation: slideInPanel 0.3s ease;
+}
+
+@keyframes slideInPanel {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Breadcrumb */
+.inspector-breadcrumb {
+  font-size: 0.75rem;
+  color: rgba(var(--rgb-white), 0.5);
+  margin-bottom: 16px;
+}
+
+.breadcrumb-separator {
+  margin: 0 6px;
+  color: rgba(var(--rgb-white), 0.3);
+}
+
+.breadcrumb-item {
+  color: rgba(var(--rgb-white), 0.5);
+}
+
+.breadcrumb-current {
+  color: var(--color-accent-soft);
+  font-weight: 500;
+}
+
+/* Header */
+.inspector-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.inspector-icon {
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.inspector-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: white;
+  line-height: 1.3;
+}
+
+/* Meta info */
+.inspector-company {
+  margin: 0 0 4px 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-accent-soft);
+}
+
+.inspector-date {
+  margin: 0 0 16px 0;
+  font-size: 0.85rem;
+  color: rgba(var(--rgb-white), 0.6);
+}
+
+/* Proficiency badge */
+.inspector-proficiency {
+  margin-bottom: 16px;
+}
+
+.proficiency-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.proficiency-badge.expert {
+  background: linear-gradient(135deg, rgba(var(--rgb-accent), 0.3), rgba(var(--rgb-accent-alt), 0.3));
+  color: var(--color-accent-soft);
+  border: 1px solid rgba(var(--rgb-accent-soft), 0.3);
+}
+
+.proficiency-badge.advanced {
+  background: rgba(var(--rgb-success), 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(var(--rgb-success), 0.3);
+}
+
+.proficiency-badge.intermediate {
+  background: rgba(var(--rgb-warning-light), 0.15);
+  color: var(--color-warning-light);
+  border: 1px solid rgba(var(--rgb-warning-light), 0.3);
+}
+
+.proficiency-badge.beginner {
+  background: rgba(var(--rgb-neutral), 0.15);
+  color: var(--color-neutral);
+  border: 1px solid rgba(var(--rgb-neutral), 0.3);
+}
+
+/* Content */
+.inspector-content {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(var(--rgb-white), 0.1);
+}
+
+.inspector-content .markdown-content {
+  max-width: none;
+}
+
+.inspector-description {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: rgba(var(--rgb-white), 0.8);
+}
+
+/* Profile in inspector */
+.inspector-profile {
+  text-align: center;
+}
+
+.inspector-profile-photo {
+  margin-bottom: 20px;
+}
+
+.inspector-profile-photo img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(var(--rgb-white), 0.2);
+  box-shadow: 0 8px 24px rgba(var(--rgb-black), 0.3);
+}
+
+.inspector-profile-name {
+  margin: 0 0 4px 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+}
+
+.inspector-profile-title {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-alt));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.inspector-profile-subtitle {
+  margin: 0 0 16px 0;
+  font-size: 0.9rem;
+  color: rgba(var(--rgb-white), 0.7);
+}
+
+.inspector-profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: rgba(var(--rgb-white), 0.6);
+}
+
+.inspector-experience {
+  color: var(--color-accent-soft);
+  font-weight: 500;
+}
+
+.inspector-location::before {
+  content: '📍 ';
+}
+
+.inspector-email::before {
+  content: '✉️ ';
+}
+
+/* ===========================================
+   INSPECTOR PANEL - Edit Mode
+   =========================================== */
+.inspector-action-buttons {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+
+.inspector-edit-btn,
+.inspector-delete-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--rgb-white), 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.inspector-edit-btn {
+  background: rgba(var(--rgb-accent), 0.2);
+  color: var(--color-accent-soft);
+}
+
+.inspector-edit-btn:hover {
+  background: rgba(var(--rgb-accent), 0.4);
+  color: white;
+  border-color: rgba(var(--rgb-accent), 0.5);
+}
+
+.inspector-delete-btn {
+  background: rgba(var(--rgb-danger), 0.15);
+  color: var(--color-danger);
+}
+
+.inspector-delete-btn:hover {
+  background: rgba(var(--rgb-danger), 0.3);
+  color: white;
+  border-color: rgba(var(--rgb-danger), 0.5);
+}
+
+.inspector-publish-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--rgb-white), 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.inspector-publish-btn.draft {
+  background: rgba(var(--rgb-warning), 0.2);
+  color: var(--color-warning);
+}
+
+.inspector-publish-btn.draft:hover {
+  background: rgba(var(--rgb-warning), 0.4);
+  color: white;
+  border-color: rgba(var(--rgb-warning), 0.5);
+}
+
+.inspector-publish-btn.published {
+  background: rgba(var(--rgb-success), 0.2);
+  color: var(--color-success);
+}
+
+.inspector-publish-btn.published:hover {
+  background: rgba(var(--rgb-success), 0.4);
+  color: white;
+  border-color: rgba(var(--rgb-success), 0.5);
+}
+
+.inspector-publish-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inspector-edit-form {
+  padding-top: 8px;
+}
+
+.edit-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.edit-form-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.edit-cancel-btn {
+  padding: 6px 12px;
+  border: 1px solid rgba(var(--rgb-white), 0.2);
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(var(--rgb-white), 0.7);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.edit-cancel-btn:hover {
+  background: rgba(var(--rgb-white), 0.1);
+  color: white;
+}
+
+.edit-error {
+  padding: 12px;
+  margin-bottom: 16px;
+  background: rgba(var(--rgb-danger), 0.15);
+  border: 1px solid rgba(var(--rgb-danger), 0.3);
+  border-radius: 8px;
+  color: var(--color-danger);
+  font-size: 0.85rem;
+}
+
+.edit-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-field span {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(var(--rgb-white), 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.edit-field input,
+.edit-field textarea,
+.edit-field select {
+  padding: 10px 12px;
+  background: rgba(var(--rgb-black), 0.3);
+  border: 1px solid rgba(var(--rgb-white), 0.15);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.edit-field input:focus,
+.edit-field textarea:focus,
+.edit-field select:focus {
+  outline: none;
+  border-color: rgba(var(--rgb-accent), 0.5);
+  background: rgba(var(--rgb-black), 0.4);
+}
+
+.edit-field textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.edit-field select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.edit-field select option {
+  background: var(--bg-surface);
+  color: white;
+}
+
+.edit-save-btn {
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-alt) 100%);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.edit-save-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--rgb-accent), 0.4);
+}
+
+.edit-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Content field - larger textarea with monospace */
+.edit-field-content textarea {
+  min-height: 150px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* Scrollbar styling */
+.inspector-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.inspector-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.inspector-panel::-webkit-scrollbar-thumb {
+  background: rgba(var(--rgb-white), 0.15);
+  border-radius: 3px;
+}
+
+.inspector-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--rgb-white), 0.25);
+}
+
+/* Close button - hidden on desktop, visible on mobile */
+.inspector-close {
+  display: none;
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--rgb-white), 0.2);
+  background: rgba(var(--rgb-black), 0.6);
+  color: rgba(var(--rgb-white), 0.9);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 110;
+}
+
+.inspector-close:hover {
+  background: rgba(var(--rgb-white), 0.15);
+  color: white;
+  border-color: rgba(var(--rgb-white), 0.3);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+/* Inspector panel becomes a bottom sheet on mobile */
+.inspector-panel {
+  position: fixed;
+  top: auto;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 65vh;
+  border-radius: 20px 20px 0 0;
+  border-left: none;
+  border-top: 1px solid rgba(var(--rgb-white), 0.15);
+  padding: 20px;
+  padding-top: 32px; /* Extra top padding for drag handle */
+  box-sizing: border-box;
+  overflow-x: hidden;
+  z-index: 100;
+  animation: slideUpPanel 0.3s ease;
+}
+
+/* Prevent content overflow */
+.inspector-panel * {
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+@keyframes slideUpPanel {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Drag handle indicator */
+.inspector-panel::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  background: rgba(var(--rgb-white), 0.3);
+  border-radius: 2px;
+}
+
+/* Show close button on mobile */
+.inspector-close {
+  display: flex;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+}
+
+
+/* Graph container - explicit height on mobile for proper transitions */
+.graph-container {
+  height: 100vh;
+  transition: height 0.3s ease;
+}
+
+.app.panel-open .graph-container {
+  width: 100%;
+  height: 35vh;
+}
+
+/* Ensure ReactFlow fills the container */
+.react-flow {
+  height: 100% !important;
+}
+
+/* Controls positioning - move up when panel is open */
+.react-flow__controls {
+  bottom: 10px;
+  left: 10px;
+  transition: bottom 0.3s ease;
+}
+
+.app.panel-open .react-flow__controls {
+  bottom: calc(65vh + 10px);
+}
+
+/* Profile in inspector - smaller on mobile */
+.inspector-profile-photo img {
+  width: 80px;
+  height: 80px;
+}
+
+.inspector-profile-name {
+  font-size: 1.3rem;
+}
+
+.inspector-title {
+  font-size: 1.1rem;
+}
+
+/* Breadcrumb wrapping and top padding for close button */
+.inspector-breadcrumb {
+  padding-right: 50px;
+  margin-top: 20px;
+}
+
+/* Profile top padding for close button */
+.inspector-profile {
+  margin-top: 20px;
+}
+}
