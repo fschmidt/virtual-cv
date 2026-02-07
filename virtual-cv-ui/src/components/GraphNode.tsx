@@ -39,8 +39,8 @@ function GraphNode({ id, data }: GraphNodeProps) {
   const draftClass = isDraft ? 'draft' : '';
   const editModeClass = editMode ? 'edit-mode' : '';
 
-  // Show add button on quickview nodes in edit mode
-  const showAddButton = editMode && state === 'quickview';
+  // Show add button on quickview nodes in edit mode (leaf types can't have children)
+  const showAddButton = editMode && state === 'quickview' && nodeType !== 'skill' && nodeType !== 'item';
 
   // Dormant state - just a dot (can still be selected when navigating back)
   if (state === 'dormant') {

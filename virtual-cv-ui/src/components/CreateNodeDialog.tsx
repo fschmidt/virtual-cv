@@ -1,9 +1,11 @@
-import { memo, useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { memo, useEffect, useState, useCallback, useMemo } from 'react';
 import { Plus, X } from 'lucide-react';
+import DialogOverlay from './DialogOverlay';
 import type { CVNode, CVNodeType, CVSectionId, CVCategoryNode } from '../types';
 import { CV_SECTIONS } from '../types';
 import type { CreateNodeCommand } from '../services';
 import { getErrorMessage } from '../api/errors';
+import { getNodeTypeLabel } from '../utils/node-utils';
 
 interface CreateNodeDialogProps {
   isOpen: boolean;
@@ -32,22 +34,6 @@ function getAllowedChildTypes(parent: CVNode): CVNodeType[] {
   }
 }
 
-// Get display label for node type
-function getTypeLabel(type: CVNodeType): string {
-  switch (type) {
-    case 'category':
-      return 'Category';
-    case 'item':
-      return 'Item';
-    case 'skill-group':
-      return 'Skill Group';
-    case 'skill':
-      return 'Skill';
-    case 'profile':
-      return 'Profile';
-  }
-}
-
 interface FormData {
   label: string;
   description: string;
@@ -62,7 +48,6 @@ interface FormData {
 }
 
 function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeDialogProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
   // Memoize to prevent infinite loop in the reset effect below
   const allowedTypes = useMemo(() => getAllowedChildTypes(parentNode), [parentNode]);
   const [selectedType, setSelectedType] = useState<CVNodeType | null>(
@@ -83,29 +68,6 @@ function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeD
       setError(null);
     }
   }, [isOpen, allowedTypes]);
-
-  // Handle Escape key to close
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isCreating) {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isCreating, onClose]);
-
-  // Focus dialog when opened
-  useEffect(() => {
-    if (isOpen) {
-      dialogRef.current?.focus();
-    }
-  }, [isOpen]);
 
   const handleFieldChange = useCallback((field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -154,173 +116,172 @@ function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeD
     }
   }, [selectedType, formData, parentNode.id, onCreate, onClose]);
 
-  if (!isOpen || allowedTypes.length === 0) return null;
+  if (allowedTypes.length === 0) return null;
 
   const canSubmit = selectedType && formData.label.trim() &&
     (selectedType !== 'category' || formData.sectionId);
 
   return (
-    <div className="create-node-overlay" onClick={isCreating ? undefined : onClose}>
-      <div
-        ref={dialogRef}
-        className="create-node-dialog"
-        onClick={(e) => e.stopPropagation()}
-        tabIndex={-1}
-      >
-        <div className="create-node-header">
-          <Plus size={24} strokeWidth={2} color="#667eea" />
-          <h2>Create New Node</h2>
-          <button
-            className="create-node-close"
-            onClick={onClose}
-            disabled={isCreating}
-            aria-label="Close"
-          >
-            <X size={20} strokeWidth={2} />
-          </button>
-        </div>
-
-        <div className="create-node-content">
-          {/* Type selector if multiple options */}
-          {allowedTypes.length > 1 && (
-            <div className="create-node-type-selector">
-              <span className="type-selector-label">Type</span>
-              <div className="type-selector-options">
-                {allowedTypes.map((type) => (
-                  <button
-                    key={type}
-                    className={`type-option ${selectedType === type ? 'active' : ''}`}
-                    onClick={() => setSelectedType(type)}
-                    disabled={isCreating}
-                  >
-                    {getTypeLabel(type)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {error && <div className="edit-error">{error}</div>}
-
-          {selectedType && (
-            <div className="edit-form-fields">
-              <label className="edit-field">
-                <span>Label *</span>
-                <input
-                  type="text"
-                  value={formData.label}
-                  onChange={(e) => handleFieldChange('label', e.target.value)}
-                  placeholder="Enter label..."
-                  autoFocus
-                  disabled={isCreating}
-                />
-              </label>
-
-              <label className="edit-field">
-                <span>Description</span>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => handleFieldChange('description', e.target.value)}
-                  placeholder="Optional description..."
-                  rows={3}
-                  disabled={isCreating}
-                />
-              </label>
-
-              {/* Category-specific fields */}
-              {selectedType === 'category' && (
-                <label className="edit-field">
-                  <span>Section *</span>
-                  <select
-                    value={formData.sectionId ?? ''}
-                    onChange={(e) => handleFieldChange('sectionId', e.target.value as CVSectionId)}
-                    disabled={isCreating}
-                  >
-                    <option value="">Select section...</option>
-                    {CV_SECTIONS.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-
-              {/* Item-specific fields */}
-              {selectedType === 'item' && (
-                <>
-                  <label className="edit-field">
-                    <span>Company / Organization</span>
-                    <input
-                      type="text"
-                      value={formData.company ?? ''}
-                      onChange={(e) => handleFieldChange('company', e.target.value)}
-                      placeholder="e.g., Acme Corp"
-                      disabled={isCreating}
-                    />
-                  </label>
-                  <label className="edit-field">
-                    <span>Date Range</span>
-                    <input
-                      type="text"
-                      value={formData.dateRange ?? ''}
-                      onChange={(e) => handleFieldChange('dateRange', e.target.value)}
-                      placeholder="e.g., 2020 - Present"
-                      disabled={isCreating}
-                    />
-                  </label>
-                  <label className="edit-field">
-                    <span>Location</span>
-                    <input
-                      type="text"
-                      value={formData.location ?? ''}
-                      onChange={(e) => handleFieldChange('location', e.target.value)}
-                      placeholder="e.g., Berlin, Germany"
-                      disabled={isCreating}
-                    />
-                  </label>
-                </>
-              )}
-
-              {/* Skill-specific fields */}
-              {(selectedType === 'skill' || selectedType === 'skill-group') && (
-                <label className="edit-field">
-                  <span>Proficiency Level</span>
-                  <select
-                    value={formData.proficiencyLevel ?? ''}
-                    onChange={(e) => handleFieldChange('proficiencyLevel', e.target.value)}
-                    disabled={isCreating}
-                  >
-                    <option value="">Select level...</option>
-                    <option value="expert">Expert</option>
-                    <option value="advanced">Advanced</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="beginner">Beginner</option>
-                  </select>
-                </label>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="create-node-actions">
-          <button
-            className="delete-cancel-btn"
-            onClick={onClose}
-            disabled={isCreating}
-          >
-            Cancel
-          </button>
-          <button
-            className="edit-save-btn"
-            onClick={handleSubmit}
-            disabled={isCreating || !canSubmit}
-          >
-            {isCreating ? 'Creating...' : 'Create'}
-          </button>
-        </div>
+    <DialogOverlay
+      isOpen={isOpen}
+      onClose={onClose}
+      closeDisabled={isCreating}
+      overlayClassName="create-node-overlay"
+      dialogClassName="create-node-dialog"
+    >
+      <div className="create-node-header">
+        <Plus size={24} strokeWidth={2} color="#667eea" />
+        <h2>Create New Node</h2>
+        <button
+          className="create-node-close"
+          onClick={onClose}
+          disabled={isCreating}
+          aria-label="Close"
+        >
+          <X size={20} strokeWidth={2} />
+        </button>
       </div>
-    </div>
+
+      <div className="create-node-content">
+        {/* Type selector if multiple options */}
+        {allowedTypes.length > 1 && (
+          <div className="create-node-type-selector">
+            <span className="type-selector-label">Type</span>
+            <div className="type-selector-options">
+              {allowedTypes.map((type) => (
+                <button
+                  key={type}
+                  className={`type-option ${selectedType === type ? 'active' : ''}`}
+                  onClick={() => setSelectedType(type)}
+                  disabled={isCreating}
+                >
+                  {getNodeTypeLabel(type)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {error && <div className="edit-error">{error}</div>}
+
+        {selectedType && (
+          <div className="edit-form-fields">
+            <label className="edit-field">
+              <span>Label *</span>
+              <input
+                type="text"
+                value={formData.label}
+                onChange={(e) => handleFieldChange('label', e.target.value)}
+                placeholder="Enter label..."
+                autoFocus
+                disabled={isCreating}
+              />
+            </label>
+
+            <label className="edit-field">
+              <span>Description</span>
+              <textarea
+                value={formData.description}
+                onChange={(e) => handleFieldChange('description', e.target.value)}
+                placeholder="Optional description..."
+                rows={3}
+                disabled={isCreating}
+              />
+            </label>
+
+            {/* Category-specific fields */}
+            {selectedType === 'category' && (
+              <label className="edit-field">
+                <span>Section *</span>
+                <select
+                  value={formData.sectionId ?? ''}
+                  onChange={(e) => handleFieldChange('sectionId', e.target.value as CVSectionId)}
+                  disabled={isCreating}
+                >
+                  <option value="">Select section...</option>
+                  {CV_SECTIONS.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {/* Item-specific fields */}
+            {selectedType === 'item' && (
+              <>
+                <label className="edit-field">
+                  <span>Company / Organization</span>
+                  <input
+                    type="text"
+                    value={formData.company ?? ''}
+                    onChange={(e) => handleFieldChange('company', e.target.value)}
+                    placeholder="e.g., Acme Corp"
+                    disabled={isCreating}
+                  />
+                </label>
+                <label className="edit-field">
+                  <span>Date Range</span>
+                  <input
+                    type="text"
+                    value={formData.dateRange ?? ''}
+                    onChange={(e) => handleFieldChange('dateRange', e.target.value)}
+                    placeholder="e.g., 2020 - Present"
+                    disabled={isCreating}
+                  />
+                </label>
+                <label className="edit-field">
+                  <span>Location</span>
+                  <input
+                    type="text"
+                    value={formData.location ?? ''}
+                    onChange={(e) => handleFieldChange('location', e.target.value)}
+                    placeholder="e.g., Berlin, Germany"
+                    disabled={isCreating}
+                  />
+                </label>
+              </>
+            )}
+
+            {/* Skill-specific fields */}
+            {(selectedType === 'skill' || selectedType === 'skill-group') && (
+              <label className="edit-field">
+                <span>Proficiency Level</span>
+                <select
+                  value={formData.proficiencyLevel ?? ''}
+                  onChange={(e) => handleFieldChange('proficiencyLevel', e.target.value)}
+                  disabled={isCreating}
+                >
+                  <option value="">Select level...</option>
+                  <option value="expert">Expert</option>
+                  <option value="advanced">Advanced</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="beginner">Beginner</option>
+                </select>
+              </label>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="create-node-actions">
+        <button
+          className="delete-cancel-btn"
+          onClick={onClose}
+          disabled={isCreating}
+        >
+          Cancel
+        </button>
+        <button
+          className="edit-save-btn"
+          onClick={handleSubmit}
+          disabled={isCreating || !canSubmit}
+        >
+          {isCreating ? 'Creating...' : 'Create'}
+        </button>
+      </div>
+    </DialogOverlay>
   );
 }
 

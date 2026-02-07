@@ -1,5 +1,6 @@
 import { memo, useState, useEffect, useRef, useMemo } from 'react';
 import SectionIcon from './SectionIcon';
+import DialogOverlay from './DialogOverlay';
 import type { CVData, CVNode, CV_SECTIONS } from '../types';
 import type { ContentMap } from '../services';
 
@@ -125,95 +126,92 @@ function SearchDialog({
           onClose();
         }
         break;
-      case 'Escape':
-        e.preventDefault();
-        onClose();
-        break;
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="search-overlay" onClick={onClose}>
-      <div className="search-dialog" onClick={(e) => e.stopPropagation()}>
-        <div className="search-input-wrapper">
-          <svg
-            className="search-icon"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            ref={inputRef}
-            type="text"
-            className="search-input"
-            placeholder="Search nodes..."
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setSelectedIndex(0);
-            }}
-            onKeyDown={handleKeyDown}
-          />
-          <kbd className="search-shortcut">ESC</kbd>
-        </div>
+    <DialogOverlay
+      isOpen={isOpen}
+      onClose={onClose}
+      overlayClassName="search-overlay"
+      dialogClassName="search-dialog"
+    >
+      <div className="search-input-wrapper">
+        <svg
+          className="search-icon"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          ref={inputRef}
+          type="text"
+          className="search-input"
+          placeholder="Search nodes..."
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSelectedIndex(0);
+          }}
+          onKeyDown={handleKeyDown}
+        />
+        <kbd className="search-shortcut">ESC</kbd>
+      </div>
 
-        {query.trim() && (
-          <div className="search-results" ref={listRef}>
-            {results.length === 0 ? (
-              <div className="search-no-results">No results found</div>
-            ) : (
-              results.map((result, index) => (
-                <div
-                  key={result.node.id}
-                  className={`search-result ${index === selectedIndex ? 'selected' : ''}`}
-                  onClick={() => {
-                    onSelect(result.node.id);
-                    onClose();
-                  }}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                >
-                  <div className="search-result-icon">
-                    {result.icon ? (
-                      <SectionIcon icon={result.icon} size={18} />
-                    ) : (
-                      <span className="search-result-type-dot" />
-                    )}
-                  </div>
-                  <div className="search-result-content">
-                    <span className="search-result-label">
-                      {result.node.label.replace('\n', ' ')}
-                    </span>
-                    <span className="search-result-type">{getNodeTypeLabel(result.node)}</span>
-                  </div>
-                  {result.matchType === 'content' && (
-                    <span className="search-result-match">in content</span>
+      {query.trim() && (
+        <div className="search-results" ref={listRef}>
+          {results.length === 0 ? (
+            <div className="search-no-results">No results found</div>
+          ) : (
+            results.map((result, index) => (
+              <div
+                key={result.node.id}
+                className={`search-result ${index === selectedIndex ? 'selected' : ''}`}
+                onClick={() => {
+                  onSelect(result.node.id);
+                  onClose();
+                }}
+                onMouseEnter={() => setSelectedIndex(index)}
+              >
+                <div className="search-result-icon">
+                  {result.icon ? (
+                    <SectionIcon icon={result.icon} size={18} />
+                  ) : (
+                    <span className="search-result-type-dot" />
                   )}
                 </div>
-              ))
-            )}
-          </div>
-        )}
+                <div className="search-result-content">
+                  <span className="search-result-label">
+                    {result.node.label.replace('\n', ' ')}
+                  </span>
+                  <span className="search-result-type">{getNodeTypeLabel(result.node)}</span>
+                </div>
+                {result.matchType === 'content' && (
+                  <span className="search-result-match">in content</span>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
-        {!query.trim() && (
-          <div className="search-hints">
-            <span>Type to search</span>
-            <span className="search-hint-keys">
-              <kbd>↑</kbd>
-              <kbd>↓</kbd> navigate
-              <kbd>↵</kbd> select
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
+      {!query.trim() && (
+        <div className="search-hints">
+          <span>Type to search</span>
+          <span className="search-hint-keys">
+            <kbd>↑</kbd>
+            <kbd>↓</kbd> navigate
+            <kbd>↵</kbd> select
+          </span>
+        </div>
+      )}
+    </DialogOverlay>
   );
 }
 
