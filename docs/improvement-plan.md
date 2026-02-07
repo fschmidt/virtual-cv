@@ -153,10 +153,11 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 
 ---
 
-## Milestone 3: Frontend Test Foundation (P1)
+## Milestone 3: Frontend Test Foundation (P1) — COMPLETED
 
 **Theme:** Enable safe UI changes with automated regression detection.
 **Branch:** `improvement/frontend-tests`
+**Status:** All 3 items completed. Vitest + React Testing Library installed. 47 smoke tests across 4 test files (cv.mapper, feature-flags, errors, content.service). Test step added to CI pipeline. TDD requirement added to CLAUDE.md.
 
 ### 3.1 Install Frontend Test Infrastructure
 
@@ -223,10 +224,11 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 
 ---
 
-## Milestone 4: Backend Test Expansion (P1)
+## Milestone 4: Backend Test Expansion (P1) — COMPLETED
 
 **Theme:** Cover critical backend business logic with automated tests.
 **Branch:** `improvement/backend-tests`
+**Status:** All 3 items completed. CvNodeService unit tests, CvController WebMvc tests, and UpdateNodeCommand validation added.
 
 ### 4.1 Add CvNodeService Unit Tests
 
@@ -277,28 +279,31 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 
 ---
 
-## Milestone 5: Operational Readiness (P1)
+## Milestone 5: Operational Readiness (P1) — COMPLETED
 
 **Theme:** Protect production data and improve observability.
-**Branch:** `improvement/ops-readiness`
+**Branch:** `improvement/operational-readiness`
+**Status:** All 2 items completed. Daily PostgreSQL backups to Google Drive via rclone CronJob. Manual backup script added. Search query `@Size` constraint added.
+
+**Implementation note:** Originally planned PVC-based on-cluster storage, but since it's a single-node cluster (single point of failure), backups are stored off-cluster on Google Drive via rclone with OAuth2 user credentials (Google SAs cannot upload to personal Drive).
 
 ### 5.1 Add PostgreSQL Backup CronJob
 
 - **ID:** OPS-01
-- **Title:** Automated database backup via Kubernetes CronJob
+- **Title:** Automated database backup via Kubernetes CronJob → Google Drive
 - **Priority:** P1
 - **Effort:** M (1–4 hours)
-- **Risk if deferred:** Any data loss event (accidental deletion, disk failure, SEC-01 exploit) results in permanent unrecoverable data loss.
-- **Risk if done wrong:** Backup CronJob that silently fails gives false confidence. Must verify backups are actually created.
-- **Acceptance criteria:**
-  - K8s CronJob runs `pg_dump` on a daily schedule
-  - Dump is stored on a separate PVC or uploaded to object storage
-  - CronJob manifest committed to `k8s/`
-  - `k8s/README.md` updated with backup/restore instructions
-- **Dependencies:** None
-- **Files affected:**
+- **Implementation:**
+  - K8s CronJob runs daily at 03:00 UTC: `pg_dump` → gzip → rclone upload to Google Drive
+  - Retains last 3 backups on Drive, deletes older ones
+  - OAuth2 user credentials stored in k8s Secret (created by `generate-gcloud-drive-backup-auth-token.sh`)
+  - CronJob manifest is secret-free and committed; token lives only in the cluster Secret
+  - `manual_backup.sh` script for on-demand backups
+- **Files changed:**
   - `k8s/backup-cronjob.yaml` (new)
-  - `k8s/README.md`
+  - `k8s/generate-gcloud-drive-backup-auth-token.sh` (new)
+  - `k8s/manual_backup.sh` (new)
+  - `k8s/README.md` (backup/restore instructions)
 
 ### 5.2 Add Search Query Length Constraint
 
@@ -306,13 +311,8 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 - **Title:** Add `@Size` constraint to search query parameter
 - **Priority:** P2
 - **Effort:** S (< 1 hour)
-- **Risk if deferred:** Minor DoS vector via extremely long query strings.
-- **Risk if done wrong:** Too-short limit could break legitimate searches.
-- **Acceptance criteria:**
-  - `GET /cv/search?q=` rejects queries longer than 200 characters with 400 Bad Request
-  - Existing search functionality unaffected for normal queries
-- **Dependencies:** None
-- **Files affected:**
+- **Implementation:** Added `@Validated` to `CvController` class and `@Size(min = 1, max = 100)` to the `q` parameter on `GET /cv/search`.
+- **Files changed:**
   - `virtual-cv-api/src/main/java/de/fschmidt/virtualcv/controller/CvController.java`
 
 ---
@@ -513,9 +513,9 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 |-----------|-------|----------|-------|-------------|
 | 1 | CI/CD Hardening & Lint Fix | P0 | 5 | S+S+M+S+S |
 | 2 | Security Baseline | P0 | 3 | L+S+S (COMPLETED) |
-| 3 | Frontend Test Foundation | P1 | 3 | S+M+S |
-| 4 | Backend Test Expansion | P1 | 3 | M+M+S |
-| 5 | Operational Readiness | P1 | 2 | M+S |
+| 3 | Frontend Test Foundation | P1 | 3 | S+M+S (COMPLETED) |
+| 4 | Backend Test Expansion | P1 | 3 | M+M+S (COMPLETED) |
+| 5 | Operational Readiness | P1 | 2 | M+S (COMPLETED) |
 | 6 | Component Refactoring | P2 | 5 | M+S+M+S+S |
 | 7 | CSS Modernization | P2 | 2 | S+L |
 | 8 | Coding Guidelines & Guardrails | P2/P3 | 2 | S+S |

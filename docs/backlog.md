@@ -54,7 +54,7 @@ Organized tasks for current and future development.
 ## 🚧 Up Next
 
 ### Infrastructure Enhancements
-- [ ] PostgreSQL backup strategy
+- [x] PostgreSQL backup strategy (daily CronJob → Google Drive via rclone)
 
 ### UI Polish
 - [x] Smooth animations/transitions when nodes expand
@@ -125,16 +125,16 @@ _Findings from the [Quality & Sustainability Audit](audit-report.md) (2026-02-06
 ### Critical
 
 - [x] **SEC-01: All CRUD endpoints unauthenticated.** Resolved: Google OAuth2 JWT authentication for write endpoints with email whitelisting. (Milestone 2)
-- [ ] **CICD-01: No test gates in either CI pipeline.** Frontend pipeline (`deploy.yml`) skips lint and has no tests. Backend pipeline (`deploy-api.yml`) skips tests via `./gradlew build -x test`. Broken code deploys to production unchecked.
-- [ ] **TEST-01: Zero frontend tests.** No test runner, no test dependencies, no test files. Any UI change risks undetected regressions. Install Vitest + React Testing Library; add smoke tests for critical flows.
+- [x] **CICD-01: No test gates in either CI pipeline.** Resolved: Both CI pipelines now run tests. Frontend: lint → test → build. Backend: test → build with PostgreSQL service container. (Milestones 1, 3)
+- [x] **TEST-01: Zero frontend tests.** Resolved: Vitest + React Testing Library installed. 47 smoke tests covering cv.mapper, feature-flags, errors, and content.service. Tests gate CI. (Milestone 3)
 
 ### High
 
-- [ ] **OPS-01: No PostgreSQL backup strategy.** Production database uses a bare PVC with no pg_dump CronJob, no WAL archiving, and no restore procedure. Data loss is permanent and unrecoverable.
-- [ ] **TEST-02: Backend tests require Docker, never run in CI.** The 11 repository tests exist but are skipped everywhere (Dockerfile uses `-x test`, no CI test job). Add a GitHub Actions job with a PostgreSQL service container.
-- [ ] **TEST-03: No service or controller layer tests.** Recursive delete, attribute merging, and HTTP validation logic are untested. Add `@WebMvcTest` and unit tests for `CvNodeService`.
-- [ ] **CICD-02: Dockerfile skips tests.** `Dockerfile:7` runs `./gradlew build -x test`. The deployed artifact has never been validated by tests. Run tests in a separate CI step before building the image.
-- [ ] **MAINT-01: 6 ESLint errors shipping to production.** Includes ref immutability violations in `App.tsx` and synchronous setState in `SearchDialog.tsx` useEffect. Fix all errors; add lint step to CI.
+- [x] **OPS-01: No PostgreSQL backup strategy.** Resolved: Daily CronJob runs pg_dump → gzip → rclone upload to Google Drive. Retains last 3 backups. Manual backup script provided. (Milestone 5)
+- [x] **TEST-02: Backend tests require Docker, never run in CI.** Resolved: CI runs tests with PostgreSQL service container. (Milestone 1)
+- [x] **TEST-03: No service or controller layer tests.** Resolved: CvNodeService unit tests and CvController WebMvc tests added. (Milestone 4)
+- [x] **CICD-02: Dockerfile skips tests.** Resolved: Tests run in separate CI step before Docker image build. (Milestone 1)
+- [x] **MAINT-01: 6 ESLint errors shipping to production.** Resolved: All ESLint errors fixed. Lint step added to CI. (Milestone 1)
 - [ ] **MAINT-02: Oversized files.** `App.css` (2,431 lines), `InspectorPanel.tsx` (696 lines). Split into module-scoped CSS files and extract sub-components.
 - [x] **SEC-02: CSRF disabled with no authentication.** Resolved: CSRF decision documented in SecurityConfig.java. Stateless JWT auth makes CSRF inapplicable. (Milestone 2)
 - [x] **SEC-03: CORS allows all headers with credentials.** Resolved: allowedHeaders restricted to Content-Type, Accept, Authorization. allowCredentials set to false. (Milestone 2)
