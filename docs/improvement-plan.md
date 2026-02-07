@@ -109,64 +109,47 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 
 ---
 
-## Milestone 2: Security Baseline (P0)
+## Milestone 2: Security Baseline (P0) — COMPLETED
 
 **Theme:** Protect production data from unauthorized modification.
 **Branch:** `improvement/security-baseline`
+**Status:** All 3 items completed. Google OAuth2 JWT authentication protects all write endpoints. Email whitelist restricts who can modify data. CORS tightened. CSRF decision documented. 7 new security integration tests pass.
 
-### 2.1 Restrict Write Endpoints to Authenticated Users
+**Implementation note:** Originally planned as API key auth (2.1), pivoted to Google OAuth2 with email whitelisting to avoid throwaway work — the permanent auth solution was implemented directly.
+
+### 2.1 Restrict Write Endpoints to Authenticated Users (Google OAuth2)
 
 - **ID:** SEC-01
-- **Title:** Add API key authentication for POST/PUT/DELETE endpoints
+- **Title:** Google OAuth2 JWT authentication for POST/PUT/DELETE endpoints
 - **Priority:** P0
-- **Effort:** M (1–4 hours)
-- **Risk if deferred:** Anyone on the internet can delete the entire CV tree with a single request. Combined with no backups (OPS-01), this means permanent unrecoverable data loss.
-- **Risk if done wrong:** Could lock out the edit mode feature. Must ensure GET requests remain public. Must provide a way to configure the API key per environment.
-- **Acceptance criteria:**
-  - `GET /cv/**` remains `permitAll()`
-  - `POST`, `PUT`, `DELETE` under `/cv/**` require a valid API key header
-  - API key is configured via environment variable (not hardcoded)
-  - Unauthorized requests return 401
-  - Existing backend tests still pass
-  - Frontend edit mode sends the API key when configured via `VITE_API_KEY` env var
-- **Dependencies:** None
-- **Files affected:**
-  - `virtual-cv-api/src/main/java/de/fschmidt/virtualcv/config/SecurityConfig.java`
-  - `virtual-cv-api/src/main/resources/application-local.properties`
-  - `virtual-cv-api/src/main/resources/application-prod.properties`
-  - `virtual-cv-ui/src/api/fetcher.ts` (add API key header for write requests)
-  - `k8s/api-deployment.yaml` (add API key secret)
-- **New dependencies:** None — Spring Security already supports request header authentication.
+- **Effort:** L (4+ hours)
+- **Implementation:**
+  - Backend: `spring-boot-starter-oauth2-resource-server` with custom `JwtDecoder` validating Google's JWKS + audience claim
+  - `EmailWhitelistFilter` (HandlerInterceptor) checks `email` + `email_verified` JWT claims against configured whitelist
+  - Frontend: `@react-oauth/google` for Sign-In, `auth.service.ts` singleton for token lifecycle (sessionStorage, expiry checks)
+  - `fetcher.ts` attaches `Authorization: Bearer` header for write methods, handles 401/403
+  - Edit toggle gated: only visible when `EDIT_MODE` flag is on AND user is authenticated
+  - k8s: non-secret config (client ID, allowed emails, datasource URL/user) in ConfigMap; only DB password in Secret
+- **Files changed:**
+  - `virtual-cv-api/build.gradle`, `SecurityConfig.java` (rewrite), `CorsConfig.java`, `EmailWhitelistFilter.java` (new), `WebMvcConfig.java` (new)
+  - `application.properties`, `application-local.properties`, `application-prod.properties`
+  - `CvControllerSecurityTest.java` (new, 7 tests)
+  - `virtual-cv-ui/src/services/auth.service.ts` (new), `api/errors.ts`, `api/fetcher.ts`, `main.tsx`, `App.tsx`, `FeatureTogglePopup.tsx`, `App.css`
+  - `.env.development`, `.env.production`, `.github/workflows/build-ui.yml`, `k8s/api-deployment.yaml`
 
 ### 2.2 Tighten CORS Configuration
 
 - **ID:** SEC-03
 - **Title:** Restrict CORS allowedHeaders and remove allowCredentials
 - **Priority:** P0
-- **Effort:** S (< 1 hour)
-- **Risk if deferred:** Overly permissive headers could be exploited if a vulnerability exists on an allowed origin.
-- **Risk if done wrong:** Blocking the `Content-Type` or new `X-API-Key` header would break API calls from the frontend.
-- **Acceptance criteria:**
-  - `allowedHeaders` lists specific values: `Content-Type`, `Accept`, `Authorization`, `X-API-Key`
-  - `allowCredentials(true)` removed (or set to `false`)
-  - Frontend API calls still work from all 3 allowed origins
-- **Dependencies:** 2.1 (SEC-01) — need to know which headers to allow (e.g., `X-API-Key`)
-- **Files affected:**
-  - `virtual-cv-api/src/main/java/de/fschmidt/virtualcv/config/CorsConfig.java`
+- **Implementation:** `allowedHeaders` set to `Content-Type`, `Accept`, `Authorization`. `allowCredentials` set to `false` (not needed for Bearer tokens).
 
 ### 2.3 Document CSRF Decision
 
 - **ID:** SEC-02
 - **Title:** Add code comment documenting why CSRF is disabled
 - **Priority:** P0
-- **Effort:** S (< 1 hour)
-- **Risk if deferred:** Future contributors may re-enable CSRF without understanding the implications, or miss that it should be re-evaluated when adding session-based auth.
-- **Risk if done wrong:** None.
-- **Acceptance criteria:**
-  - `SecurityConfig.java` has a comment explaining CSRF is disabled because the API is stateless and uses API key auth (not cookies/sessions)
-- **Dependencies:** 2.1 (SEC-01) — comment should reference the auth model
-- **Files affected:**
-  - `virtual-cv-api/src/main/java/de/fschmidt/virtualcv/config/SecurityConfig.java`
+- **Implementation:** Comment in `SecurityConfig.java` explains CSRF is disabled because the API is stateless with JWT Bearer token auth (no cookies/sessions).
 
 ---
 
@@ -529,7 +512,7 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 | Milestone | Theme | Priority | Items | Total Effort |
 |-----------|-------|----------|-------|-------------|
 | 1 | CI/CD Hardening & Lint Fix | P0 | 5 | S+S+M+S+S |
-| 2 | Security Baseline | P0 | 3 | M+S+S |
+| 2 | Security Baseline | P0 | 3 | L+S+S (COMPLETED) |
 | 3 | Frontend Test Foundation | P1 | 3 | S+M+S |
 | 4 | Backend Test Expansion | P1 | 3 | M+M+S |
 | 5 | Operational Readiness | P1 | 2 | M+S |

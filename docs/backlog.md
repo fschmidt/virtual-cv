@@ -77,7 +77,16 @@ Organized tasks for current and future development.
 
 ---
 
+### Permission System
+- [ ] Simple per-feature permission system (no roles)
+- [ ] Users table in the database
+- [ ] User creation form, only accessible when holding a specific permission
+- [ ] Owner user seeded via Flyway migration with all permissions
+
 ## 📦 Future Features
+
+### Multi-User Support
+- [ ] Open the system for others by allowing each user to have their own CV
 
 ### Advanced Features
 - [ ] Media upload for images
@@ -97,7 +106,6 @@ _Unscoped ideas for later consideration:_
 - Public sharing with unique URLs
 - Multilingual support
 - CV Life Simulator (roguelike game based on CV content)
-- multiple cv's and multiple users
 
 ---
 
@@ -116,7 +124,7 @@ _Findings from the [Quality & Sustainability Audit](audit-report.md) (2026-02-06
 
 ### Critical
 
-- [ ] **SEC-01: All CRUD endpoints unauthenticated.** `SecurityConfig.java:20` uses `.requestMatchers("/cv/**").permitAll()` which permits POST/PUT/DELETE without auth. Anyone can delete the entire CV tree with a single request. Restrict `permitAll()` to GET only; add authentication for write operations.
+- [x] **SEC-01: All CRUD endpoints unauthenticated.** Resolved: Google OAuth2 JWT authentication for write endpoints with email whitelisting. (Milestone 2)
 - [ ] **CICD-01: No test gates in either CI pipeline.** Frontend pipeline (`deploy.yml`) skips lint and has no tests. Backend pipeline (`deploy-api.yml`) skips tests via `./gradlew build -x test`. Broken code deploys to production unchecked.
 - [ ] **TEST-01: Zero frontend tests.** No test runner, no test dependencies, no test files. Any UI change risks undetected regressions. Install Vitest + React Testing Library; add smoke tests for critical flows.
 
@@ -128,5 +136,5 @@ _Findings from the [Quality & Sustainability Audit](audit-report.md) (2026-02-06
 - [ ] **CICD-02: Dockerfile skips tests.** `Dockerfile:7` runs `./gradlew build -x test`. The deployed artifact has never been validated by tests. Run tests in a separate CI step before building the image.
 - [ ] **MAINT-01: 6 ESLint errors shipping to production.** Includes ref immutability violations in `App.tsx` and synchronous setState in `SearchDialog.tsx` useEffect. Fix all errors; add lint step to CI.
 - [ ] **MAINT-02: Oversized files.** `App.css` (2,431 lines), `InspectorPanel.tsx` (696 lines). Split into module-scoped CSS files and extract sub-components.
-- [ ] **SEC-02: CSRF disabled with no authentication.** Acceptable for stateless token-based auth, but currently no auth exists at all. Document the decision; re-evaluate when adding authentication.
-- [ ] **SEC-03: CORS allows all headers with credentials.** Restrict `allowedHeaders` to specific values; remove `allowCredentials(true)` until authentication requires it.
+- [x] **SEC-02: CSRF disabled with no authentication.** Resolved: CSRF decision documented in SecurityConfig.java. Stateless JWT auth makes CSRF inapplicable. (Milestone 2)
+- [x] **SEC-03: CORS allows all headers with credentials.** Resolved: allowedHeaders restricted to Content-Type, Accept, Authorization. allowCredentials set to false. (Milestone 2)
