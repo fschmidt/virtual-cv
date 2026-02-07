@@ -5,12 +5,15 @@ import de.fschmidt.virtualcv.dto.CvDataDto;
 import de.fschmidt.virtualcv.dto.CvNodeDto;
 import de.fschmidt.virtualcv.service.CvNodeService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/cv")
 public class CvController {
@@ -41,7 +44,7 @@ public class CvController {
     }
 
     @GetMapping("/search")
-    public List<CvNodeDto> search(@RequestParam String q) {
+    public List<CvNodeDto> search(@RequestParam @Size(min = 1, max = 100) String q) {
         return service.search(q);
     }
 
