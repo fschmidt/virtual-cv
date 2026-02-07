@@ -1,22 +1,35 @@
-import { ApiError, ValidationError, NotFoundError, ConflictError, NetworkError } from './errors';
+import { ApiError, AuthenticationError, AuthorizationError, ValidationError, NotFoundError, ConflictError, NetworkError } from './errors';
+import { authService } from '../services/auth.service';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9823';
+
+const WRITE_METHODS = new Set(['POST', 'PUT', 'DELETE', 'PATCH']);
 
 export const customFetch = async <T>(
   url: string,
   options?: RequestInit
 ): Promise<T> => {
   const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+  const method = (options?.method ?? 'GET').toUpperCase();
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string>),
+  };
+
+  if (WRITE_METHODS.has(method)) {
+    const token = authService.getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
 
   let response: Response;
   try {
     response = await fetch(fullUrl, {
       ...options,
       cache: 'no-store', // Prevent browser caching of API responses
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      headers,
     });
   } catch {
     throw new NetworkError();
@@ -36,6 +49,11 @@ export const customFetch = async <T>(
     switch (response.status) {
       case 400:
         throw new ValidationError(message, errorBody.fields);
+      case 401:
+        authService.signOut();
+        throw new AuthenticationError(message);
+      case 403:
+        throw new AuthorizationError(message);
       case 404:
         throw new NotFoundError('Resource', 'unknown');
       case 409:
