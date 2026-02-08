@@ -317,10 +317,11 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 
 ---
 
-## Milestone 6: Component Refactoring (P2)
+## Milestone 6: Component Refactoring (P2) — COMPLETED
 
 **Theme:** Eliminate duplication and reduce component complexity. Must be completed before CSS restructuring so component boundaries are settled first.
 **Branch:** `improvement/component-refactoring`
+**Status:** All 5 items completed. App.tsx reduced to 213 lines via useGraphState hook. DialogOverlay shared across 3 dialogs. InspectorPanel split into 4 sub-components (376 lines). Shared getNodeTypeLabel utility. customFetch type safety fixed.
 
 ### 6.1 Extract Graph State Hook from App.tsx
 
@@ -421,10 +422,11 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 
 ---
 
-## Milestone 7: CSS Modernization (P2)
+## Milestone 7: CSS Modernization (P2) — COMPLETED
 
 **Theme:** Replace monolithic stylesheet with themeable, component-scoped CSS. Must follow Milestone 6 so component boundaries are settled.
 **Branch:** `improvement/css-modernization`
+**Status:** All 2 items completed. 28 CSS custom properties in :root block, 293 hardcoded color values replaced. App.css split from 2,431 lines to 273 lines (globals only), 10 component CSS files created.
 
 ### 7.1 Extract CSS Custom Properties for Theme Colors
 
@@ -464,10 +466,11 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 
 ---
 
-## Milestone 8: Coding Guidelines & Guardrails (P2)
+## Milestone 8: Coding Guidelines & Guardrails (P2) — COMPLETED
 
 **Theme:** Codify the patterns established in Milestones 6–7 so they are enforced automatically and documented for future contributors.
 **Branch:** `improvement/coding-guidelines`
+**Status:** All 2 items completed. Coding Conventions section added to CLAUDE.md. ESLint max-lines rule: warn at 350, error at 500.
 
 ### 8.1 Document Component & CSS Conventions in CLAUDE.md
 
@@ -511,14 +514,14 @@ This plan complements the product [backlog](backlog.md). P0/P1 items should be c
 
 | Milestone | Theme | Priority | Items | Total Effort |
 |-----------|-------|----------|-------|-------------|
-| 1 | CI/CD Hardening & Lint Fix | P0 | 5 | S+S+M+S+S |
-| 2 | Security Baseline | P0 | 3 | L+S+S (COMPLETED) |
-| 3 | Frontend Test Foundation | P1 | 3 | S+M+S (COMPLETED) |
-| 4 | Backend Test Expansion | P1 | 3 | M+M+S (COMPLETED) |
-| 5 | Operational Readiness | P1 | 2 | M+S (COMPLETED) |
-| 6 | Component Refactoring | P2 | 5 | M+S+M+S+S |
-| 7 | CSS Modernization | P2 | 2 | S+L |
-| 8 | Coding Guidelines & Guardrails | P2/P3 | 2 | S+S |
+| 1 | CI/CD Hardening & Lint Fix | P0 | 5 | COMPLETED |
+| 2 | Security Baseline | P0 | 3 | COMPLETED |
+| 3 | Frontend Test Foundation | P1 | 3 | COMPLETED |
+| 4 | Backend Test Expansion | P1 | 3 | COMPLETED |
+| 5 | Operational Readiness | P1 | 2 | COMPLETED |
+| 6 | Component Refactoring | P2 | 5 | COMPLETED |
+| 7 | CSS Modernization | P2 | 2 | COMPLETED |
+| 8 | Coding Guidelines & Guardrails | P2/P3 | 2 | COMPLETED |
 
 ### Audit Coverage
 

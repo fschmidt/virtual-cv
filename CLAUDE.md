@@ -54,21 +54,28 @@ virtual-cv/
 ├── virtual-cv-ui/              # React + Vite + TypeScript frontend
 │   └── src/
 │       ├── api/
-│       │   ├── generated.ts        # Generated API client
+│       │   ├── generated.ts        # Auto-generated API client (NEVER edit)
 │       │   ├── fetcher.ts          # Custom fetch with error handling
 │       │   └── errors.ts           # Typed API errors
 │       ├── components/
-│       │   ├── GraphNode.tsx           # Unified node component (3 states)
-│       │   ├── InspectorPanel.tsx      # Side panel for node details/editing
-│       │   ├── ViewToggle.tsx          # Graph/CV/Edit mode toggle
-│       │   ├── CreateNodeDialog.tsx    # Node creation dialog
-│       │   ├── DeleteConfirmDialog.tsx # Delete confirmation modal
-│       │   ├── SearchDialog.tsx        # Cmd+K search
-│       │   ├── StandardCVView.tsx      # Linear CV view
-│       │   ├── FeatureTogglePopup.tsx  # Dev feature flag toggle
-│       │   ├── SectionIcon.tsx         # Category SVG icons
-│       │   ├── LoadingSkeleton.tsx     # Loading placeholder
-│       │   └── Toast.tsx              # Toast notifications
+│       │   ├── GraphNode.tsx/.css       # Unified node component (3 states)
+│       │   ├── InspectorPanel.tsx/.css  # Side panel orchestrator
+│       │   ├── NodeView.tsx             # Generic node detail view
+│       │   ├── NodeViewProfile.tsx      # Profile node detail view
+│       │   ├── NodeEditForm.tsx         # Generic node edit form
+│       │   ├── NodeEditProfile.tsx      # Profile node edit form
+│       │   ├── DialogOverlay.tsx        # Shared dialog overlay + Escape/click handling
+│       │   ├── CreateNodeDialog.tsx/.css # Node creation dialog
+│       │   ├── DeleteConfirmDialog.tsx/.css # Delete confirmation modal
+│       │   ├── SearchDialog.tsx/.css    # Cmd+K search
+│       │   ├── ViewToggle.tsx/.css      # Graph/CV/Edit mode toggle
+│       │   ├── StandardCVView.tsx/.css  # Linear CV view
+│       │   ├── FeatureTogglePopup.tsx/.css # Dev feature flag + auth toggle
+│       │   ├── Toast.tsx/.css           # Toast notifications
+│       │   ├── LoadingSkeleton.tsx/.css  # Loading placeholder
+│       │   └── SectionIcon.tsx          # Category SVG icons
+│       ├── hooks/
+│       │   └── useGraphState.ts    # Graph state management (CRUD, drag, selection)
 │       ├── types/
 │       │   ├── cv.types.ts         # Domain model
 │       │   └── graph.types.ts      # UI types
@@ -76,11 +83,13 @@ virtual-cv/
 │       │   ├── cv.service.ts       # API service wrapper with caching
 │       │   ├── cv.mapper.ts        # Data → React Flow transform
 │       │   ├── content.service.ts  # Markdown content parsing
-│       │   └── layout.service.ts   # Node size calculations
+│       │   ├── layout.service.ts   # Node size calculations
+│       │   └── auth.service.ts     # Google OAuth token lifecycle
 │       ├── utils/
-│       │   └── feature-flags.ts    # Feature toggle system
+│       │   ├── feature-flags.ts    # Feature toggle system
+│       │   └── node-utils.ts       # Shared node helpers (labels, parent chain)
 │       ├── App.tsx
-│       └── App.css
+│       └── App.css                 # Globals: :root vars, layout, print, shared keyframes
 ├── virtual-cv-api/             # Java Spring Boot backend
 │   └── src/main/java/de/fschmidt/virtualcv/
 │       ├── controller/CvController.java
@@ -92,10 +101,12 @@ virtual-cv/
 │       └── config/                # SecurityConfig, CorsConfig
 ├── docs/
 │   ├── architecture.md        # Architecture overview & assessment
-│   ├── audit-report.md        # Quality & sustainability audit
 │   ├── backlog.md             # Current backlog and roadmap
-│   ├── improvement-plan.md    # Prioritized improvement roadmap
-│   └── initial-roadmap.md     # Original project roadmap (read-only)
+│   └── archive/               # Completed plans and historical docs
+│       ├── previous-iterations.md  # Summary of completed iterations
+│       ├── improvement-plan.md     # Quality improvement plan (all 8 milestones completed)
+│       ├── audit-report.md         # Quality & sustainability audit (all findings resolved)
+│       └── initial-roadmap.md      # Original project roadmap
 ├── k8s/                       # Kubernetes deployment manifests
 └── .github/workflows/
     ├── deploy.yml             # Frontend → GitHub Pages
@@ -159,10 +170,13 @@ Backend (PostgreSQL) → REST API → Generated TS Client → cvService → Reac
 
 ### Styling
 
-- Dark theme: `#0d0d14` background, `#1a1a2e` nodes
-- Purple accent: `#667eea` → `#764ba2` gradient
-- Draft nodes: dashed border, amber color
+- Theme colors defined as CSS custom properties in `:root` (see `App.css`)
+- Dark theme: `--bg-body` background, `--bg-surface` nodes
+- Purple accent: `--color-accent` → `--color-accent-alt` gradient
+- Draft nodes: dashed border, amber (`--color-warning`)
 - All sizes in `rem` for quickview nodes
+- Each component has a co-located `.css` file (e.g., `GraphNode.tsx` → `GraphNode.css`)
+- `App.css` contains only globals: `:root` variables, base layout, React Flow overrides, print styles, shared keyframes
 
 ### Feature Flags
 
@@ -185,6 +199,26 @@ All new features and bug fixes must follow test-driven development (TDD):
 - Test runner: JUnit 5 via Gradle (`./gradlew test` in `virtual-cv-api/`)
 - Repository tests use Testcontainers (requires Docker)
 - Use `@WebMvcTest` for controller tests, plain JUnit for service unit tests
+
+## Coding Conventions
+
+### Component Structure
+- Keep components under ~300 lines; split when orchestrating multiple concerns
+- Extract state-heavy logic into custom hooks in `hooks/` (e.g., `useGraphState`)
+- Shared utilities go in `utils/` — don't duplicate helpers across components
+- Use `DialogOverlay` for all modal dialogs (handles overlay click, Escape key, focus)
+- Use `getNodeTypeLabel()` from `utils/node-utils.ts` for human-readable node type names
+
+### CSS
+- **Never hardcode hex/rgba colors** — use CSS custom properties from `:root` in `App.css`
+- For rgba with variable alpha: `rgba(var(--rgb-accent), 0.3)` (RGB channel variables)
+- Co-locate component CSS: `ComponentName.tsx` imports `./ComponentName.css`
+- `App.css` is for globals only: `:root` variables, base layout, React Flow overrides, `@media print`, shared `@keyframes`
+- ESLint enforces file size: warning at 350 lines, error at 500 lines
+
+### API Client
+- `generated.ts` is auto-generated from OpenAPI — **never edit manually**
+- Regenerate with `npm run generate-api` after backend API changes
 
 ## Design Principles
 
