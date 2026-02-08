@@ -7,7 +7,9 @@ import '@xyflow/react/dist/style.css';
 import './App.css';
 import GraphNode from './components/GraphNode';
 import ViewToggle, { type ViewMode } from './components/ViewToggle';
-import StandardCVView from './components/StandardCVView';
+import CVPDFView from './components/CVPDFView';
+import CVDocument from './components/CVDocument';
+import { pdf } from '@react-pdf/renderer';
 import SearchDialog from './components/SearchDialog';
 import InspectorPanel from './components/InspectorPanel';
 import LoadingSkeleton from './components/LoadingSkeleton';
@@ -120,6 +122,19 @@ function Flow() {
     setViewMode('graph');
   }, [setSelectedId]);
 
+  const onDownloadPdf = useCallback(async () => {
+    if (!cvData) return;
+    const blob = await pdf(
+      <CVDocument cvData={cvData} contentMap={contentMap} sections={CV_SECTIONS} />
+    ).toBlob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'cv.pdf';
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [cvData, contentMap]);
+
   if (!cvData) {
     return (
       <div className="app loading">
@@ -136,6 +151,7 @@ function Flow() {
         showEditToggle={showEditToggle}
         editMode={editMode}
         onEditModeChange={setEditMode}
+        onDownloadPdf={onDownloadPdf}
       />
       {viewMode === 'graph' ? (
         <>
@@ -172,7 +188,7 @@ function Flow() {
           />
         </>
       ) : (
-        <StandardCVView cvData={cvData} contentMap={contentMap} sections={CV_SECTIONS} />
+        <CVPDFView cvData={cvData} contentMap={contentMap} sections={CV_SECTIONS} />
       )}
       <SearchDialog
         isOpen={isSearchOpen}

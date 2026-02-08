@@ -68,8 +68,9 @@ virtual-cv/
 │       │   ├── CreateNodeDialog.tsx/.css # Node creation dialog
 │       │   ├── DeleteConfirmDialog.tsx/.css # Delete confirmation modal
 │       │   ├── SearchDialog.tsx/.css    # Cmd+K search
-│       │   ├── ViewToggle.tsx/.css      # Graph/CV/Edit mode toggle
-│       │   ├── StandardCVView.tsx/.css  # Linear CV view
+│       │   ├── ViewToggle.tsx/.css      # Graph/CV/Edit mode toggle + PDF download
+│       │   ├── CVDocument.tsx           # react-pdf Document (A4 PDF layout)
+│       │   ├── CVPDFView.tsx/.css       # PDF viewer wrapper (replaces StandardCVView)
 │       │   ├── FeatureTogglePopup.tsx/.css # Dev feature flag + auth toggle
 │       │   ├── Toast.tsx/.css           # Toast notifications
 │       │   ├── LoadingSkeleton.tsx/.css  # Loading placeholder
@@ -89,7 +90,7 @@ virtual-cv/
 │       │   ├── feature-flags.ts    # Feature toggle system
 │       │   └── node-utils.ts       # Shared node helpers (labels, parent chain)
 │       ├── App.tsx
-│       └── App.css                 # Globals: :root vars, layout, print, shared keyframes
+│       └── App.css                 # Globals: :root vars, layout, shared keyframes
 ├── virtual-cv-api/             # Java Spring Boot backend
 │   └── src/main/java/de/fschmidt/virtualcv/
 │       ├── controller/CvController.java
@@ -176,7 +177,7 @@ Backend (PostgreSQL) → REST API → Generated TS Client → cvService → Reac
 - Draft nodes: dashed border, amber (`--color-warning`)
 - All sizes in `rem` for quickview nodes
 - Each component has a co-located `.css` file (e.g., `GraphNode.tsx` → `GraphNode.css`)
-- `App.css` contains only globals: `:root` variables, base layout, React Flow overrides, print styles, shared keyframes
+- `App.css` contains only globals: `:root` variables, base layout, React Flow overrides, shared keyframes
 
 ### Feature Flags
 
@@ -213,7 +214,7 @@ All new features and bug fixes must follow test-driven development (TDD):
 - **Never hardcode hex/rgba colors** — use CSS custom properties from `:root` in `App.css`
 - For rgba with variable alpha: `rgba(var(--rgb-accent), 0.3)` (RGB channel variables)
 - Co-locate component CSS: `ComponentName.tsx` imports `./ComponentName.css`
-- `App.css` is for globals only: `:root` variables, base layout, React Flow overrides, `@media print`, shared `@keyframes`
+- `App.css` is for globals only: `:root` variables, base layout, React Flow overrides, shared `@keyframes`
 - ESLint enforces file size: warning at 350 lines, error at 500 lines
 
 ### API Client
