@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useCallback } from 'react';
-import { Network, FileText, Menu, X, Pencil } from 'lucide-react';
+import { Network, FileText, Menu, X, Pencil, Download } from 'lucide-react';
 import './ViewToggle.css';
 
 export type ViewMode = 'graph' | 'cv';
@@ -10,9 +10,10 @@ interface ViewToggleProps {
   showEditToggle?: boolean;
   editMode?: boolean;
   onEditModeChange?: (editMode: boolean) => void;
+  onDownloadPdf?: () => void;
 }
 
-function ViewToggle({ view, onChange, showEditToggle, editMode, onEditModeChange }: ViewToggleProps) {
+function ViewToggle({ view, onChange, showEditToggle, editMode, onEditModeChange, onDownloadPdf }: ViewToggleProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -80,6 +81,19 @@ function ViewToggle({ view, onChange, showEditToggle, editMode, onEditModeChange
           <FileText size={18} />
           {isMobile && <span>CV</span>}
         </button>
+        {view === 'cv' && onDownloadPdf && (
+          <>
+            <div className="floating-menu-divider" />
+            <button
+              className="floating-menu-btn"
+              onClick={onDownloadPdf}
+              title="Download PDF"
+            >
+              <Download size={18} />
+              {isMobile && <span>PDF</span>}
+            </button>
+          </>
+        )}
         {showEditToggle && (
           <>
             <div className="floating-menu-divider" />
