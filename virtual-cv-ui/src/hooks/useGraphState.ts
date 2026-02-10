@@ -8,7 +8,7 @@ import {
 } from '@xyflow/react';
 import type { ViewMode } from '../components/ViewToggle';
 import { useToast } from '../components/Toast';
-import { cvService, buildNodes, buildEdges, getAllContent, type ContentMap, type UpdateNodeCommand, type CreateNodeCommand } from '../services';
+import { cvService, buildNodes, buildEdges, getAllContent, setNodeContent, type ContentMap, type UpdateNodeCommand, type CreateNodeCommand } from '../services';
 import type { CVData, CVNodeType } from '../types';
 
 // Animation duration in ms
@@ -140,9 +140,12 @@ export function useGraphState({ editMode, viewMode, onAddChild }: UseGraphStateO
   }, []);
 
   // CRUD operations
-  const onSaveNode = useCallback(async (id: string, updates: UpdateNodeCommand) => {
+  const onSaveNode = useCallback(async (id: string, updates: UpdateNodeCommand, content?: string) => {
     try {
       await cvService.updateNode(id, updates);
+      if (content !== undefined) {
+        setNodeContent(id, content);
+      }
       const newData = await cvService.getCVData();
       setCvData(newData);
       setContentMap(getAllContent());

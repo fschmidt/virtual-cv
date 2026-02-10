@@ -9,19 +9,11 @@ import NodeEditForm from './NodeEditForm';
 import type { CVNode, CVProfileNode, CVData, CVSection, CVNodeType } from '../types';
 import { getParentChain, getSectionIcon } from '../utils/node-utils';
 import type { ContentMap, UpdateNodeCommand, CreateNodeCommand } from '../services';
-import { setNodeContent } from '../services';
+import { toUpdateNodeCommand, type FormData } from '../utils/form-utils';
 import './InspectorPanel.css';
 
 // Swipe threshold in pixels
 const SWIPE_THRESHOLD = 80;
-
-// Local form data type with flat string attributes for UI
-interface FormData {
-  label?: string;
-  description?: string;
-  content?: string;
-  attributes?: Record<string, string | undefined>;
-}
 
 interface InspectorPanelProps {
   selectedId: string | null;
@@ -83,20 +75,6 @@ function buildFormDataFromNode(node: CVNode): FormData {
     default:
       return base;
   }
-}
-
-// Convert FormData to UpdateNodeCommand for API
-function toUpdateNodeCommand(data: FormData): UpdateNodeCommand {
-  const result: UpdateNodeCommand = {
-    label: data.label,
-    description: data.description,
-  };
-
-  if (data.attributes && Object.keys(data.attributes).length > 0) {
-    result.attributes = data.attributes as unknown as UpdateNodeCommand['attributes'];
-  }
-
-  return result;
 }
 
 function InspectorPanel({
@@ -220,9 +198,6 @@ function InspectorPanel({
     setError(null);
     try {
       await onSave(selectedId, toUpdateNodeCommand(formData), formData.content);
-      if (formData.content !== undefined) {
-        setNodeContent(selectedId, formData.content);
-      }
       setIsEditing(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save changes');
