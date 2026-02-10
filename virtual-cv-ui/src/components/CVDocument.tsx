@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image, Link, StyleSheet } from '@react-pdf/renderer';
 import type { CVData, CVNode, CVProfileNode, CVCategoryNode, CV_SECTIONS } from '../types';
 import type { ContentMap } from '../services';
 import { MarkdownContent } from '../utils/markdown-pdf';
@@ -16,6 +16,7 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     color: '#222',
     backgroundColor: '#ffffff',
+    paddingTop: 30,
     paddingBottom: FOOTER_HEIGHT + 10,
   },
 
@@ -43,15 +44,20 @@ const styles = StyleSheet.create({
     fontSize: 7.5,
     color: '#999',
   },
+  footerLink: {
+    fontSize: 7.5,
+    color: '#999',
+    textDecoration: 'none',
+  },
 
   // ── Two-column layout ──
   sidebar: {
     width: SIDEBAR_WIDTH,
-    padding: '30 18',
+    padding: '0 18',
   },
   main: {
     width: '68%',
-    padding: '30 28 10 22',
+    padding: '0 28 10 22',
   },
 
   // ── Header (in main column) ──
@@ -208,6 +214,17 @@ interface CVDocumentProps {
   sections: typeof CV_SECTIONS;
 }
 
+/** Extract start year from markdown content (e.g. "**2018 - Present**" → 2018). "Present" sorts first. */
+function extractStartYear(content: string | undefined): number {
+  if (!content) return 0;
+  const match = content.match(/\*\*(\d{4})\s*-\s*(Present|\d{4})\*\*/);
+  if (!match) return 0;
+  const isPresent = match[2] === 'Present';
+  const startYear = parseInt(match[1], 10);
+  // Present jobs get a boost so they sort first; otherwise use start year
+  return isPresent ? startYear + 10000 : startYear;
+}
+
 const generatedDate = new Date().toLocaleDateString('en-US', {
   year: 'numeric',
   month: 'long',
@@ -238,6 +255,9 @@ export default function CVDocument({ cvData, contentMap, sections }: CVDocumentP
         {/* ─── FIXED: footer (repeats on every page) ─── */}
         <View style={styles.footer} fixed>
           <Text>{profileNode.email}</Text>
+          <Link src="https://cv.fschmidts.net/" style={styles.footerLink}>
+            Generated with cv.fschmidts.net
+          </Link>
           <Text>{generatedDate}</Text>
           <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
         </View>
@@ -341,7 +361,8 @@ export default function CVDocument({ cvData, contentMap, sections }: CVDocumentP
             const categoryNode = categoryNodes.find((c) => c.sectionId === section.id);
             if (!categoryNode) return null;
 
-            const items = getChildren(categoryNode.id);
+            const items = getChildren(categoryNode.id)
+              .sort((a, b) => extractStartYear(contentMap[b.id]) - extractStartYear(contentMap[a.id]));
 
             return (
               <View key={section.id} style={styles.section}>
