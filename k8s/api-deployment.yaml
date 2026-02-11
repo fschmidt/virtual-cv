@@ -40,7 +40,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: ghcr.io/fschmidt/virtual-cv-api:latest
+          image: ghcr.io/fschmidt/virtual-cv-api:IMAGE_TAG
           ports:
             - containerPort: 8080
           envFrom:
