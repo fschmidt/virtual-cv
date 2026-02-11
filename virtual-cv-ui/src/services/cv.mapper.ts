@@ -1,7 +1,43 @@
 import type { Node, Edge } from '@xyflow/react';
-import type { CVData, CVNode, CVProfileNode, CVCategoryNode, NodeState, GraphNodeData } from '../types';
-import { CV_SECTIONS } from '../types';
+import { CvNodeDtoType } from '../api/generated';
+import type { CVData, CVNode, CVNodeType } from '../types';
+import { CV_SECTIONS, profileAttrs, categoryAttrs, itemAttrs, isDraft } from '../types';
 import type { ContentMap } from './content.service';
+
+// Visual states for nodes (absorbed from former graph.types.ts)
+export type NodeState = 'detailed' | 'quickview' | 'dormant';
+
+// Data passed to GraphNode component
+export interface GraphNodeData {
+  label: string;
+  nodeType: CVNodeType;
+  state: NodeState;
+  // Profile-specific (flattened for rendering)
+  name?: string;
+  title?: string;
+  subtitle?: string;
+  experience?: string;
+  email?: string;
+  location?: string;
+  photoUrl?: string;
+  // Item-specific
+  company?: string;
+  dateRange?: string;
+  // Markdown content for detailed view
+  content?: string;
+  // Section icon for category nodes
+  icon?: string;
+  // Whether this node is currently selected
+  selected?: boolean;
+  // Whether this node is a draft (only visible in edit mode)
+  isDraft?: boolean;
+  // Edit mode - enables dragging and add child button
+  editMode?: boolean;
+  // Callback to add a child node (used in edit mode)
+  onAddChild?: (parentId: string) => void;
+  // Index signature for React Flow compatibility
+  [key: string]: unknown;
+}
 
 // Get all ancestor IDs for a given node
 function getAncestorIds(nodeId: string, nodes: CVNode[]): string[] {
@@ -37,7 +73,6 @@ export function computeNodeState(
   }
 
   if (nodeId === selectedId) {
-    // In inspector mode, selected nodes stay as quickview
     return inspectorMode ? 'quickview' : 'detailed';
   }
 
@@ -50,60 +85,49 @@ export function computeNodeState(
   return 'dormant';
 }
 
-// Type guard for profile node
-function isProfileNode(node: CVNode): node is CVProfileNode {
-  return node.type === 'profile';
-}
-
-// Type guard for category node
-function isCategoryNode(node: CVNode): node is CVCategoryNode {
-  return node.type === 'category';
-}
-
 // Map CV node to React Flow node data
 function mapNodeToGraphData(
   node: CVNode,
   state: NodeState,
   content?: string
 ): GraphNodeData {
+  const draft = isDraft(node);
   const base: GraphNodeData = {
     label: node.label,
     nodeType: node.type,
     state,
     content,
-    isDraft: node.isDraft,
+    isDraft: draft,
   };
 
-  if (isProfileNode(node)) {
+  if (node.type === CvNodeDtoType.PROFILE) {
+    const p = profileAttrs(node);
     return {
       ...base,
-      name: node.name,
-      title: node.title,
-      subtitle: node.subtitle,
-      experience: node.experience,
-      email: node.email,
-      location: node.location,
-      photoUrl: node.photoUrl,
+      name: p.name,
+      title: p.title,
+      subtitle: p.subtitle,
+      experience: p.experience,
+      email: p.email,
+      location: p.location,
+      photoUrl: p.photoUrl,
     };
   }
 
   // Add icon for category nodes
-  if (isCategoryNode(node)) {
-    const section = CV_SECTIONS.find((s) => s.id === node.sectionId);
+  if (node.type === CvNodeDtoType.CATEGORY) {
+    const c = categoryAttrs(node);
+    const section = CV_SECTIONS.find((s) => s.id === c.sectionId);
     if (section) {
       base.icon = section.icon;
     }
   }
 
-  // Add other type-specific fields as needed
-  if ('description' in node && node.description) {
-    base.description = node.description;
-  }
-  if ('company' in node && node.company) {
-    base.company = node.company;
-  }
-  if ('dateRange' in node && node.dateRange) {
-    base.dateRange = node.dateRange;
+  // Add item-specific fields
+  if (node.type === CvNodeDtoType.ITEM) {
+    const item = itemAttrs(node);
+    if (item.company) base.company = item.company;
+    if (item.dateRange) base.dateRange = item.dateRange;
   }
 
   return base;
@@ -121,42 +145,34 @@ export function buildNodes(
 ): Node<GraphNodeData>[] {
   // Filter out draft nodes when not in edit mode
   const visibleNodes = cvData.nodes.filter(
-    (node) => !node.isDraft || editModeEnabled
+    (node) => !isDraft(node) || editModeEnabled
   );
-
-  // Use saved positions from backend
-  const savedPositionMap = new Map(cvData.positions.map((p) => [p.nodeId, { x: p.x, y: p.y }]));
 
   // Get position: prefer existing (dragged) positions in edit mode, then saved, then near parent
   const getPosition = (node: CVNode): { x: number; y: number } => {
-    // In edit mode, preserve existing positions from current graph state (for dragging)
     if (existingPositions) {
       const existingPos = existingPositions.get(node.id);
-      if (existingPos) {
-        return existingPos;
-      }
+      if (existingPos) return existingPos;
     }
     // Use saved position from backend
-    const savedPosition = savedPositionMap.get(node.id);
-    if (savedPosition) {
-      return savedPosition;
+    if (node.positionX != null && node.positionY != null) {
+      return { x: node.positionX, y: node.positionY };
     }
     // New node - place it near its parent with a small offset
     if (node.parentId) {
-      const parentPosition = existingPositions?.get(node.parentId) ?? savedPositionMap.get(node.parentId);
-      if (parentPosition) {
-        // Offset to the right and slightly down from parent
-        return { x: parentPosition.x + 200, y: parentPosition.y + 50 };
+      const parentPos = existingPositions?.get(node.parentId);
+      if (parentPos) return { x: parentPos.x + 200, y: parentPos.y + 50 };
+      const parentNode = cvData.nodes.find((n) => n.id === node.parentId);
+      if (parentNode?.positionX != null && parentNode?.positionY != null) {
+        return { x: parentNode.positionX + 200, y: parentNode.positionY + 50 };
       }
     }
-    // Fallback to origin
     return { x: 0, y: 0 };
   };
 
   return visibleNodes.map((node) => {
     const state = computeNodeState(node.id, selectedId, visibleNodes, inspectorMode);
     const position = getPosition(node);
-    // Don't pass content to nodes in inspector mode (shown in panel instead)
     const content = inspectorMode ? undefined : contentMap?.[node.id];
     const isSelected = node.id === selectedId;
 
@@ -183,14 +199,12 @@ export function buildEdges(
 ): Edge[] {
   const edges: Edge[] = [];
 
-  // Filter out draft nodes when not in edit mode
   const visibleNodes = cvData.nodes.filter(
-    (node) => !node.isDraft || editModeEnabled
+    (node) => !isDraft(node) || editModeEnabled
   );
   const visibleNodeIds = new Set(visibleNodes.map((n) => n.id));
 
   for (const node of visibleNodes) {
-    // Only create edge if parent is also visible
     if (node.parentId && visibleNodeIds.has(node.parentId)) {
       const sourceState = computeNodeState(node.parentId, selectedId, visibleNodes);
       const targetState = computeNodeState(node.id, selectedId, visibleNodes);

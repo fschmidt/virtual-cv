@@ -1,8 +1,9 @@
 import { memo, useEffect, useState, useCallback, useMemo } from 'react';
 import { Plus, X } from 'lucide-react';
 import DialogOverlay from './DialogOverlay';
-import type { CVNode, CVNodeType, CVSectionId, CVCategoryNode } from '../types';
-import { CV_SECTIONS } from '../types';
+import { CvNodeDtoType } from '../api/generated';
+import type { CVNode, CVNodeType, CVSectionId } from '../types';
+import { CV_SECTIONS, categoryAttrs } from '../types';
 import type { CreateNodeCommand } from '../services';
 import { getErrorMessage } from '../api/errors';
 import { getNodeTypeLabel } from '../utils/node-utils';
@@ -18,26 +19,25 @@ interface CreateNodeDialogProps {
 // Determine allowed child types based on parent
 function getAllowedChildTypes(parent: CVNode): CVNodeType[] {
   switch (parent.type) {
-    case 'profile':
-      return ['category'];
-    case 'category': {
-      // Check sectionId to determine if skills section
-      const categoryNode = parent as CVCategoryNode;
-      if (categoryNode.sectionId === 'skills') {
-        return ['skill-group'];
+    case CvNodeDtoType.PROFILE:
+      return [CvNodeDtoType.CATEGORY];
+    case CvNodeDtoType.CATEGORY: {
+      const c = categoryAttrs(parent);
+      if (c.sectionId === 'skills') {
+        return [CvNodeDtoType.SKILL_GROUP];
       }
-      return ['item'];
+      return [CvNodeDtoType.ITEM];
     }
-    case 'skill-group':
-      return ['skill'];
+    case CvNodeDtoType.SKILL_GROUP:
+      return [CvNodeDtoType.SKILL];
     default:
-      return []; // item and skill are leaf nodes
+      return [];
   }
 }
 
 interface FormData {
   label: string;
-  description: string;
+  markdownContent: string;
   // Category-specific
   sectionId?: CVSectionId;
   // Item-specific
@@ -49,14 +49,13 @@ interface FormData {
 }
 
 function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeDialogProps) {
-  // Memoize to prevent infinite loop in the reset effect below
   const allowedTypes = useMemo(() => getAllowedChildTypes(parentNode), [parentNode]);
   const [selectedType, setSelectedType] = useState<CVNodeType | null>(
     allowedTypes.length === 1 ? allowedTypes[0] : null
   );
   const [formData, setFormData] = useState<FormData>({
     label: '',
-    description: '',
+    markdownContent: '',
   });
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +64,7 @@ function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeD
   useEffect(() => {
     if (isOpen) {
       setSelectedType(allowedTypes.length === 1 ? allowedTypes[0] : null);
-      setFormData({ label: '', description: '' });
+      setFormData({ label: '', markdownContent: '' });
       setError(null);
     }
   }, [isOpen, allowedTypes]);
@@ -81,24 +80,23 @@ function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeD
     setError(null);
 
     try {
-      // Build the command based on type
       const command: CreateNodeCommand = {
         id: crypto.randomUUID(),
         parentId: parentNode.id,
         label: formData.label.trim(),
-        description: formData.description.trim() || undefined,
+        markdownContent: formData.markdownContent.trim() || undefined,
       };
 
       // Add type-specific fields
-      if (selectedType === 'category' && formData.sectionId) {
+      if (selectedType === CvNodeDtoType.CATEGORY && formData.sectionId) {
         (command as Record<string, unknown>).sectionId = formData.sectionId;
       }
-      if (selectedType === 'item') {
+      if (selectedType === CvNodeDtoType.ITEM) {
         if (formData.company) (command as Record<string, unknown>).company = formData.company;
         if (formData.dateRange) (command as Record<string, unknown>).dateRange = formData.dateRange;
         if (formData.location) (command as Record<string, unknown>).location = formData.location;
       }
-      if ((selectedType === 'skill' || selectedType === 'skill-group') && formData.proficiencyLevel) {
+      if ((selectedType === CvNodeDtoType.SKILL || selectedType === CvNodeDtoType.SKILL_GROUP) && formData.proficiencyLevel) {
         (command as Record<string, unknown>).proficiencyLevel = formData.proficiencyLevel;
       }
 
@@ -120,7 +118,7 @@ function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeD
   if (allowedTypes.length === 0) return null;
 
   const canSubmit = selectedType && formData.label.trim() &&
-    (selectedType !== 'category' || formData.sectionId);
+    (selectedType !== CvNodeDtoType.CATEGORY || formData.sectionId);
 
   return (
     <DialogOverlay
@@ -144,7 +142,6 @@ function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeD
       </div>
 
       <div className="create-node-content">
-        {/* Type selector if multiple options */}
         {allowedTypes.length > 1 && (
           <div className="create-node-type-selector">
             <span className="type-selector-label">Type</span>
@@ -179,19 +176,19 @@ function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeD
               />
             </label>
 
-            <label className="edit-field">
-              <span>Description</span>
+            <label className="edit-field edit-field-content">
+              <span>Content (Markdown)</span>
               <textarea
-                value={formData.description}
-                onChange={(e) => handleFieldChange('description', e.target.value)}
-                placeholder="Optional description..."
+                value={formData.markdownContent}
+                onChange={(e) => handleFieldChange('markdownContent', e.target.value)}
+                placeholder="Optional markdown content..."
                 rows={3}
                 disabled={isCreating}
               />
             </label>
 
             {/* Category-specific fields */}
-            {selectedType === 'category' && (
+            {selectedType === CvNodeDtoType.CATEGORY && (
               <label className="edit-field">
                 <span>Section *</span>
                 <select
@@ -210,7 +207,7 @@ function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeD
             )}
 
             {/* Item-specific fields */}
-            {selectedType === 'item' && (
+            {selectedType === CvNodeDtoType.ITEM && (
               <>
                 <label className="edit-field">
                   <span>Company / Organization</span>
@@ -246,7 +243,7 @@ function CreateNodeDialog({ isOpen, parentNode, onClose, onCreate }: CreateNodeD
             )}
 
             {/* Skill-specific fields */}
-            {(selectedType === 'skill' || selectedType === 'skill-group') && (
+            {(selectedType === CvNodeDtoType.SKILL || selectedType === CvNodeDtoType.SKILL_GROUP) && (
               <label className="edit-field">
                 <span>Proficiency Level</span>
                 <select

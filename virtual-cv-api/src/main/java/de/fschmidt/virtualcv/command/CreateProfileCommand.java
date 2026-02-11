@@ -6,7 +6,7 @@ public record CreateProfileCommand(
         @NotBlank String id,
         String parentId,
         @NotBlank String label,
-        String description,
+        String markdownContent,
         Integer positionX,
         Integer positionY,
         // Profile-specific

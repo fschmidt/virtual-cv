@@ -1,5 +1,9 @@
-// Node types in the CV graph
-export type CVNodeType = 'profile' | 'category' | 'item' | 'skill-group' | 'skill';
+import type { CvNodeDto } from '../api/generated';
+import { CvNodeDtoType } from '../api/generated';
+
+// Re-export the API enum as the canonical node type
+export type CVNodeType = CvNodeDtoType;
+export { CvNodeDtoType };
 
 // Section IDs for standard CV view
 export type CVSectionId = 'work' | 'skills' | 'education' | 'languages';
@@ -20,70 +24,66 @@ export const CV_SECTIONS: CVSection[] = [
   { id: 'languages', label: 'Languages', icon: 'globe', order: 4 },
 ];
 
-// Base interface for all CV nodes
-export interface CVNodeBase {
+// Decorator interface: narrows CvNodeDto fields that the API guarantees are non-null.
+// Uses Omit for `attributes` because Orval generates a doubly-nested map type
+// ({[key: string]: {[key: string]: unknown}}) for Jackson's Map<String,Object>,
+// but the actual runtime data is a flat map.
+export interface CVNode extends Omit<CvNodeDto, 'attributes'> {
   id: string;
-  type: CVNodeType;
-  parentId: string | null;
+  type: CvNodeDtoType;
   label: string;
-  description?: string;
-  tags?: string[];
-  isDraft?: boolean;
+  attributes?: Record<string, unknown>;
 }
 
-// Profile node - the central business card
-export interface CVProfileNode extends CVNodeBase {
-  type: 'profile';
-  name: string;
-  title: string;
-  subtitle: string;
-  experience: string;
-  email: string;
-  location: string;
-  photoUrl: string;
-}
-
-// Category nodes - top-level groupings
-export interface CVCategoryNode extends CVNodeBase {
-  type: 'category';
-  sectionId: CVSectionId;
-}
-
-// Work/Education items
-export interface CVItemNode extends CVNodeBase {
-  type: 'item';
-  company?: string;
-  dateRange?: string;
-  location?: string;
-  highlights?: string[];
-  technologies?: string[];
-}
-
-// Skill groups
-export interface CVSkillGroupNode extends CVNodeBase {
-  type: 'skill-group';
-  proficiencyLevel?: 'expert' | 'advanced' | 'intermediate' | 'beginner';
-}
-
-// Individual skills
-export interface CVSkillNode extends CVNodeBase {
-  type: 'skill';
-  proficiencyLevel?: 'expert' | 'advanced' | 'intermediate' | 'beginner';
-  yearsOfExperience?: number;
-}
-
-// Union type for all CV nodes
-export type CVNode = CVProfileNode | CVCategoryNode | CVItemNode | CVSkillGroupNode | CVSkillNode;
-
-// Position data (separate from content)
-export interface NodePosition {
-  nodeId: string;
-  x: number;
-  y: number;
-}
-
-// Complete CV data structure
 export interface CVData {
   nodes: CVNode[];
-  positions: NodePosition[];
+}
+
+// ── Typed attribute accessors (decorator pattern) ──
+
+function attrs(node: CVNode): Record<string, unknown> {
+  return (node.attributes as Record<string, unknown> | undefined) ?? {};
+}
+
+export function profileAttrs(node: CVNode) {
+  const a = attrs(node);
+  return {
+    name: (a.name as string) ?? node.label,
+    title: (a.title as string) ?? '',
+    subtitle: (a.subtitle as string) ?? '',
+    experience: (a.experience as string) ?? '',
+    email: (a.email as string) ?? '',
+    location: (a.location as string) ?? '',
+    photoUrl: (a.photoUrl as string) ?? '',
+  };
+}
+
+export function categoryAttrs(node: CVNode) {
+  const a = attrs(node);
+  return {
+    sectionId: (a.sectionId as CVSectionId) ?? (node.id as CVSectionId),
+  };
+}
+
+export function itemAttrs(node: CVNode) {
+  const a = attrs(node);
+  return {
+    company: a.company as string | undefined,
+    dateRange: a.dateRange as string | undefined,
+    location: a.location as string | undefined,
+    highlights: a.highlights as string[] | undefined,
+    technologies: a.technologies as string[] | undefined,
+  };
+}
+
+export function skillAttrs(node: CVNode) {
+  const a = attrs(node);
+  return {
+    proficiencyLevel: a.proficiencyLevel as string | undefined,
+    yearsOfExperience: a.yearsOfExperience as number | undefined,
+  };
+}
+
+export function isDraft(node: CVNode): boolean {
+  return (attrs(node).isDraft as boolean) ?? false;
 }

@@ -1,9 +1,10 @@
 import Markdown from 'react-markdown';
 import { Eye, EyeOff, Pencil, Plus } from 'lucide-react';
-import type { CVProfileNode } from '../types';
+import type { CVNode } from '../types';
+import { profileAttrs, isDraft } from '../types';
 
 interface NodeViewProfileProps {
-  node: CVProfileNode;
+  node: CVNode;
   content: string | undefined;
   editModeEnabled: boolean;
   canHaveChildren: boolean;
@@ -29,6 +30,9 @@ function NodeViewProfile({
   onPublish,
   onCreateChild,
 }: NodeViewProfileProps) {
+  const p = profileAttrs(node);
+  const draft = isDraft(node);
+
   return (
     <>
       {editModeEnabled && (showEdit || showPublish) && (
@@ -40,27 +44,27 @@ function NodeViewProfile({
           )}
           {showPublish && (
             <button
-              className={`inspector-publish-btn ${node.isDraft ? 'draft' : 'published'}`}
+              className={`inspector-publish-btn ${draft ? 'draft' : 'published'}`}
               onClick={onPublish}
-              title={node.isDraft ? 'Publish' : 'Unpublish'}
+              title={draft ? 'Publish' : 'Unpublish'}
               disabled={isPublishing}
             >
-              {node.isDraft ? <Eye size={18} strokeWidth={2} /> : <EyeOff size={18} strokeWidth={2} />}
+              {draft ? <Eye size={18} strokeWidth={2} /> : <EyeOff size={18} strokeWidth={2} />}
             </button>
           )}
         </div>
       )}
       <div className="inspector-profile">
         <div className="inspector-profile-photo">
-          <img src={node.photoUrl} alt={node.name} />
+          <img src={p.photoUrl} alt={p.name} />
         </div>
-        <h1 className="inspector-profile-name">{node.name}</h1>
-        <h2 className="inspector-profile-title">{node.title}</h2>
-        <p className="inspector-profile-subtitle">{node.subtitle}</p>
+        <h1 className="inspector-profile-name">{p.name}</h1>
+        <h2 className="inspector-profile-title">{p.title}</h2>
+        <p className="inspector-profile-subtitle">{p.subtitle}</p>
         <div className="inspector-profile-details">
-          <span className="inspector-experience">{node.experience}</span>
-          <span className="inspector-location">{node.location}</span>
-          <span className="inspector-email">{node.email}</span>
+          <span className="inspector-experience">{p.experience}</span>
+          <span className="inspector-location">{p.location}</span>
+          <span className="inspector-email">{p.email}</span>
         </div>
         {content && (
           <div className="inspector-content markdown-content">

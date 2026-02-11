@@ -40,7 +40,7 @@ class CvNodeRepositoryTest {
         // Given
         String id = uniqueId();
         CvNode node = new CvNode(id, NodeType.PROFILE, "John Doe");
-        node.setDescription("Software Developer");
+        node.setMarkdownContent("Software Developer");
         node.setAttributes(Map.of(
             "email", "john@example.com",
             "location", "Berlin"
@@ -102,7 +102,7 @@ class CvNodeRepositoryTest {
         String uniqueTerm = "UniqueSearchTerm" + UUID.randomUUID().toString().substring(0, 4);
 
         CvNode node1 = new CvNode(uniqueId(), NodeType.SKILL, uniqueTerm + " Programming");
-        node1.setDescription("Development with " + uniqueTerm);
+        node1.setMarkdownContent("Development with " + uniqueTerm);
         repository.save(node1);
 
         CvNode node2 = new CvNode(uniqueId(), NodeType.SKILL, "Unrelated Node");

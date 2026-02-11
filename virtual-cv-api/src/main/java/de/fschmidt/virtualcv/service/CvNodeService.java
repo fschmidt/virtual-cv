@@ -53,7 +53,7 @@ public class CvNodeService {
         CvNode node = new CvNode();
         node.setId(command.id());
         node.setLabel(command.label());
-        node.setDescription(command.description());
+        node.setMarkdownContent(command.markdownContent());
         node.setPositionX(command.positionX());
         node.setPositionY(command.positionY());
 
@@ -113,8 +113,8 @@ public class CvNodeService {
                     if (command.label() != null) {
                         node.setLabel(command.label());
                     }
-                    if (command.description() != null) {
-                        node.setDescription(command.description());
+                    if (command.markdownContent() != null) {
+                        node.setMarkdownContent(command.markdownContent());
                     }
                     if (command.attributes() != null) {
                         // Merge new attributes with existing (don't replace)
@@ -171,7 +171,7 @@ public class CvNodeService {
                 node.getType(),
                 node.getParent() != null ? node.getParent().getId() : null,
                 node.getLabel(),
-                node.getDescription(),
+                node.getMarkdownContent(),
                 node.getAttributes(),
                 node.getPositionX(),
                 node.getPositionY()

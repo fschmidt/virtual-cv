@@ -10,7 +10,7 @@ public sealed interface CreateNodeCommand permits
     String id();
     String parentId();
     String label();
-    String description();
+    String markdownContent();
     Integer positionX();
     Integer positionY();
 }

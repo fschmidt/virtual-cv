@@ -1,9 +1,9 @@
 import type { CVNodeType } from '../types';
+import { CvNodeDtoType } from '../api/generated';
 
 interface FormData {
   label?: string;
-  description?: string;
-  content?: string;
+  markdownContent?: string;
   attributes?: Record<string, string | undefined>;
 }
 
@@ -46,17 +46,9 @@ function NodeEditForm({
             onChange={(e) => onFieldChange('label', e.target.value)}
           />
         </label>
-        <label className="edit-field">
-          <span>Description</span>
-          <textarea
-            value={formData.description ?? ''}
-            onChange={(e) => onFieldChange('description', e.target.value)}
-            rows={3}
-          />
-        </label>
 
         {/* Item-specific fields */}
-        {nodeType === 'item' && (
+        {nodeType === CvNodeDtoType.ITEM && (
           <>
             <label className="edit-field">
               <span>Company</span>
@@ -86,7 +78,7 @@ function NodeEditForm({
         )}
 
         {/* Skill-specific fields */}
-        {(nodeType === 'skill' || nodeType === 'skill-group') && (
+        {(nodeType === CvNodeDtoType.SKILL || nodeType === CvNodeDtoType.SKILL_GROUP) && (
           <label className="edit-field">
             <span>Proficiency Level</span>
             <select
@@ -106,8 +98,8 @@ function NodeEditForm({
         <label className="edit-field edit-field-content">
           <span>Content (Markdown)</span>
           <textarea
-            value={formData.content ?? ''}
-            onChange={(e) => onFieldChange('content', e.target.value)}
+            value={formData.markdownContent ?? ''}
+            onChange={(e) => onFieldChange('markdownContent', e.target.value)}
             rows={8}
             placeholder="Enter markdown content..."
           />

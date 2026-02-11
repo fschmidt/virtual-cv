@@ -78,11 +78,10 @@ virtual-cv/
 │       ├── hooks/
 │       │   └── useGraphState.ts    # Graph state management (CRUD, drag, selection)
 │       ├── types/
-│       │   ├── cv.types.ts         # Domain model
-│       │   └── graph.types.ts      # UI types
+│       │   └── cv.types.ts         # Decorator types (CVNode, CVData) + typed attribute accessors
 │       ├── services/
 │       │   ├── cv.service.ts       # API service wrapper with caching
-│       │   ├── cv.mapper.ts        # Data → React Flow transform
+│       │   ├── cv.mapper.ts        # Data → React Flow transform (exports NodeState, GraphNodeData)
 │       │   ├── content.service.ts  # Markdown content parsing
 │       │   ├── layout.service.ts   # Node size calculations
 │       │   └── auth.service.ts     # Google OAuth token lifecycle
@@ -152,17 +151,28 @@ All nodes use a single `GraphNode` component with three states:
 
 ### Node Types
 
-- `profile` - Business card with photo, title, experience, contact
-- `category` - Top-level groups (Work, Skills, Projects, Education)
-- `item` - Individual entries (jobs, projects, degrees)
-- `skill-group` - Skill categories (Frontend, Backend, DevOps)
-- `skill` - Individual skills (React, Java, Docker)
+Uses `CvNodeDtoType` enum from the generated API client (UPPER_CASE values):
+
+- `PROFILE` - Business card with photo, title, experience, contact
+- `CATEGORY` - Top-level groups (Work, Skills, Projects, Education)
+- `ITEM` - Individual entries (jobs, projects, degrees)
+- `SKILL_GROUP` - Skill categories (Frontend, Backend, DevOps)
+- `SKILL` - Individual skills (React, Java, Docker)
 
 ### Data Flow
 
 ```
 Backend (PostgreSQL) → REST API → Generated TS Client → cvService → React Flow
 ```
+
+### Frontend Type Model
+
+The frontend uses generated API types directly — no manual model mapping layer:
+
+- `CVNode extends Omit<CvNodeDto, 'attributes'>` — narrows `id`, `type`, `label` to non-optional, overrides `attributes` to `Record<string, unknown>`
+- `CVData` — wraps `CVNode[]` for the full CV payload
+- **Typed attribute accessors** (decorator pattern): `profileAttrs(node)`, `categoryAttrs(node)`, `itemAttrs(node)`, `skillAttrs(node)`, `isDraft(node)` — extract type-specific fields from the generic `attributes` bag
+- Node content is stored in `markdownContent` (single field, rendered as Markdown in the inspector panel)
 
 ### API Configuration
 
