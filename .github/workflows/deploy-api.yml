@@ -74,4 +74,4 @@ jobs:
           IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's|/|-|g')
           sed -i "s|IMAGE_TAG|${IMAGE_TAG}|g" k8s/api-deployment.yaml
           kubectl apply -f k8s/api-deployment.yaml
-          kubectl rollout status deployment/virtual-cv-api -n virtual-cv --timeout=120s
+          kubectl rollout status deployment/virtual-cv-api -n virtual-cv --timeout=300s
