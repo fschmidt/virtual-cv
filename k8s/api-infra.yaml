@@ -1,0 +1,25 @@
+# Infrastructure resources for virtual-cv-api.
+# Apply manually for initial setup or config changes:
+#   kubectl apply -f k8s/api-infra.yaml
+# NOT applied by CI/CD — only api-deployment.yaml is.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: virtual-cv
+data:
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/virtualcv
+  SPRING_DATASOURCE_USERNAME: virtualcv
+  GOOGLE_CLIENT_ID: 669506515393-cv8nd2guomsf2il52r3685eunnvm2q6s.apps.googleusercontent.com
+  AUTH_ALLOWED_EMAILS: fschmidt2011@gmail.com
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-secrets
+  namespace: virtual-cv
+type: Opaque
+stringData:
+  SPRING_DATASOURCE_PASSWORD: changeme-in-production
