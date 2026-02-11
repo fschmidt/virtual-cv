@@ -38,6 +38,7 @@ function AddChildButton({ nodeId, onAddChild }: { nodeId: string; onAddChild?: (
 
 function GraphNode({ id, data }: GraphNodeProps) {
   const { label, nodeType, state, content, selected, isDraft, editMode, onAddChild } = data;
+  const typeClass = nodeType.toLowerCase().replace('_', '-');
   const selectedClass = selected ? 'selected' : '';
   const draftClass = isDraft ? 'draft' : '';
   const editModeClass = editMode ? 'edit-mode' : '';
@@ -98,7 +99,7 @@ function GraphNode({ id, data }: GraphNodeProps) {
   // Category node with icon
   if (nodeType === CvNodeDtoType.CATEGORY && data.icon) {
     return (
-      <div className={`graph-node ${nodeType} ${state} ${selectedClass} ${draftClass} ${editModeClass}`}>
+      <div className={`graph-node ${typeClass} ${state} ${selectedClass} ${draftClass} ${editModeClass}`}>
         <SectionIcon icon={data.icon} size={state === 'detailed' ? 24 : 20} className="category-icon" />
         <span className="node-label">{label}</span>
         {showAddButton && <AddChildButton nodeId={id} onAddChild={onAddChild} />}
@@ -111,7 +112,7 @@ function GraphNode({ id, data }: GraphNodeProps) {
   // Detailed state with markdown content
   if (state === 'detailed' && content) {
     return (
-      <div className={`graph-node ${nodeType} ${state} ${selectedClass} ${draftClass} ${editModeClass}`}>
+      <div className={`graph-node ${typeClass} ${state} ${selectedClass} ${draftClass} ${editModeClass}`}>
         <div className="markdown-content">
           <Markdown>{content}</Markdown>
         </div>
@@ -123,7 +124,7 @@ function GraphNode({ id, data }: GraphNodeProps) {
 
   // Quickview and fallback
   return (
-    <div className={`graph-node ${nodeType} ${state} ${selectedClass} ${draftClass} ${editModeClass}`}>
+    <div className={`graph-node ${typeClass} ${state} ${selectedClass} ${draftClass} ${editModeClass}`}>
       <span className="node-label">{label}</span>
       {showAddButton && <AddChildButton nodeId={id} onAddChild={onAddChild} />}
       <Handle type="source" position={Position.Right} />
