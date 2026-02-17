@@ -47,71 +47,11 @@ See [docs/backlog.md](docs/backlog.md) for the full roadmap. Key priorities:
 - Export features (PDF, Markdown)
 - UI polish (animations, auto-layout)
 
-## Monorepo Structure
-
-```
-virtual-cv/
-├── virtual-cv-ui/              # React + Vite + TypeScript frontend
-│   └── src/
-│       ├── api/
-│       │   ├── generated.ts        # Auto-generated API client (NEVER edit)
-│       │   ├── fetcher.ts          # Custom fetch with error handling
-│       │   └── errors.ts           # Typed API errors
-│       ├── components/
-│       │   ├── GraphNode.tsx/.css       # Unified node component (3 states)
-│       │   ├── InspectorPanel.tsx/.css  # Side panel orchestrator
-│       │   ├── NodeView.tsx             # Generic node detail view
-│       │   ├── NodeViewProfile.tsx      # Profile node detail view
-│       │   ├── NodeEditForm.tsx         # Generic node edit form
-│       │   ├── NodeEditProfile.tsx      # Profile node edit form
-│       │   ├── DialogOverlay.tsx        # Shared dialog overlay + Escape/click handling
-│       │   ├── CreateNodeDialog.tsx/.css # Node creation dialog
-│       │   ├── DeleteConfirmDialog.tsx/.css # Delete confirmation modal
-│       │   ├── SearchDialog.tsx/.css    # Cmd+K search
-│       │   ├── ViewToggle.tsx/.css      # Graph/CV/Edit mode toggle + PDF download
-│       │   ├── CVDocument.tsx           # react-pdf Document (A4 PDF layout)
-│       │   ├── CVPDFView.tsx/.css       # PDF viewer wrapper (replaces StandardCVView)
-│       │   ├── FeatureTogglePopup.tsx/.css # Dev feature flag + auth toggle
-│       │   ├── Toast.tsx/.css           # Toast notifications
-│       │   ├── LoadingSkeleton.tsx/.css  # Loading placeholder
-│       │   └── SectionIcon.tsx          # Category SVG icons
-│       ├── hooks/
-│       │   └── useGraphState.ts    # Graph state management (CRUD, drag, selection)
-│       ├── types/
-│       │   └── cv.types.ts         # Decorator types (CVNode, CVData) + typed attribute accessors
-│       ├── services/
-│       │   ├── cv.service.ts       # API service wrapper with caching
-│       │   ├── cv.mapper.ts        # Data → React Flow transform (exports NodeState, GraphNodeData)
-│       │   ├── content.service.ts  # Markdown content parsing
-│       │   ├── layout.service.ts   # Node size calculations
-│       │   └── auth.service.ts     # Google OAuth token lifecycle
-│       ├── utils/
-│       │   ├── feature-flags.ts    # Feature toggle system
-│       │   └── node-utils.ts       # Shared node helpers (labels, parent chain)
-│       ├── App.tsx
-│       └── App.css                 # Globals: :root vars, layout, shared keyframes
-├── virtual-cv-api/             # Java Spring Boot backend
-│   └── src/main/java/de/fschmidt/virtualcv/
-│       ├── controller/CvController.java
-│       ├── service/CvNodeService.java
-│       ├── repository/CvNodeRepository.java
-│       ├── domain/CvNode.java
-│       ├── dto/                   # CvDataDto, CvNodeDto
-│       ├── command/               # Create/Update command records
-│       └── config/                # SecurityConfig, CorsConfig
-├── docs/
-│   ├── architecture.md        # Architecture overview & assessment
-│   ├── backlog.md             # Current backlog and roadmap
-│   └── archive/               # Completed plans and historical docs
-│       ├── previous-iterations.md  # Summary of completed iterations
-│       ├── improvement-plan.md     # Quality improvement plan (all 8 milestones completed)
-│       ├── audit-report.md         # Quality & sustainability audit (all findings resolved)
-│       └── initial-roadmap.md      # Original project roadmap
-├── k8s/                       # Kubernetes deployment manifests
-└── .github/workflows/
-    ├── deploy.yml             # Frontend → GitHub Pages
-    └── deploy-api.yml         # Backend → Docker → K8s
-```
+## Monorepo Structure 
+- k8s: kuberntes resources
+- docs: documentation and roadmap
+- virtual-cv-api: backend
+- virtual-cv-ui: frontend
 
 ## Commands
 
