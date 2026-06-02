@@ -48,10 +48,14 @@ See [docs/backlog.md](docs/backlog.md) for the full roadmap. Key priorities:
 - UI polish (animations, auto-layout)
 
 ## Monorepo Structure 
-- k8s: kuberntes resources
+- k8s: app deployment manifests only (API Deployment/Service/Ingress + secret)
 - docs: documentation and roadmap
 - virtual-cv-api: backend
 - virtual-cv-ui: frontend
+
+> Cluster setup, the shared PostgreSQL instance (database `virtualcv` at
+> `postgresql.data.svc.cluster.local`), and DB backups live in the separate
+> `fschmidt/infrastructure` repo — not here.
 
 ## Commands
 
