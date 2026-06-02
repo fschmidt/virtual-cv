@@ -1,47 +1,36 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { getNodeContent, getAllContent, setNodeContent, mergeContent, resetContent } from '../content.service'
+import { describe, it, expect } from 'vitest';
+import { buildContentMap } from '../content.service';
+import type { CVData } from '../../types';
 
-describe('content.service', () => {
-  beforeEach(() => {
-    resetContent()
-  })
+describe('buildContentMap', () => {
+  it('maps node markdownContent by ID', () => {
+    const cvData: CVData = {
+      nodes: [
+        { id: 'profile', type: 'PROFILE', label: 'Me', markdownContent: '## About\nSome bio', attributes: { name: 'Me', title: '', subtitle: '', experience: '', email: '', location: '', photoUrl: '' } },
+        { id: 'work', type: 'CATEGORY', parentId: 'profile', label: 'Work', markdownContent: 'Work experience', attributes: { sectionId: 'work' } },
+      ],
+    };
 
-  it('getAllContent returns a content map', () => {
-    const content = getAllContent()
-    expect(typeof content).toBe('object')
-  })
+    const result = buildContentMap(cvData);
+    expect(result).toEqual({
+      profile: '## About\nSome bio',
+      work: 'Work experience',
+    });
+  });
 
-  it('getNodeContent returns undefined for non-existent node', () => {
-    expect(getNodeContent('non-existent-id')).toBeUndefined()
-  })
+  it('skips nodes without markdownContent', () => {
+    const cvData: CVData = {
+      nodes: [
+        { id: 'skills', type: 'CATEGORY', parentId: 'profile', label: 'Skills', attributes: { sectionId: 'skills' } },
+      ],
+    };
 
-  it('setNodeContent adds content at runtime', () => {
-    setNodeContent('test-node', 'Hello world')
-    expect(getNodeContent('test-node')).toBe('Hello world')
-  })
+    const result = buildContentMap(cvData);
+    expect(result).toEqual({});
+  });
 
-  it('setNodeContent removes content when given empty string', () => {
-    setNodeContent('test-node', 'Some content')
-    setNodeContent('test-node', '')
-    expect(getNodeContent('test-node')).toBeUndefined()
-  })
-
-  it('mergeContent adds new entries without overwriting unrelated ones', () => {
-    setNodeContent('existing', 'Keep me')
-    mergeContent({ merged: 'New content' })
-    expect(getNodeContent('existing')).toBe('Keep me')
-    expect(getNodeContent('merged')).toBe('New content')
-  })
-
-  it('mergeContent overwrites existing entries', () => {
-    setNodeContent('node-a', 'Old')
-    mergeContent({ 'node-a': 'Updated' })
-    expect(getNodeContent('node-a')).toBe('Updated')
-  })
-
-  it('resetContent restores original file content', () => {
-    setNodeContent('runtime-only', 'Temp')
-    resetContent()
-    expect(getNodeContent('runtime-only')).toBeUndefined()
-  })
-})
+  it('returns empty map for empty nodes', () => {
+    const result = buildContentMap({ nodes: [] });
+    expect(result).toEqual({});
+  });
+});

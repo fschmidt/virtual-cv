@@ -1,15 +1,4 @@
-import type {
-  CVData,
-  CVNode,
-  CVProfileNode,
-  CVCategoryNode,
-  CVItemNode,
-  CVSkillGroupNode,
-  CVSkillNode,
-  CVNodeType,
-  CVSectionId,
-  NodePosition,
-} from '../types';
+import type { CVData, CVNode, CVNodeType } from '../types';
 import {
   getAllNodes,
   search,
@@ -28,102 +17,8 @@ import type {
   CreateSkillGroupCommand,
   CreateSkillCommand,
   CreateProfileCommand,
+  UpdateNodeCommand,
 } from '../api/generated';
-import type { CvNodeDto, UpdateNodeCommand } from '../api/generated';
-
-// Map API node type to frontend node type
-function mapNodeType(apiType: CvNodeDtoType): CVNodeType {
-  const mapping: Record<CvNodeDtoType, CVNodeType> = {
-    PROFILE: 'profile',
-    CATEGORY: 'category',
-    ITEM: 'item',
-    SKILL_GROUP: 'skill-group',
-    SKILL: 'skill',
-  };
-  return mapping[apiType];
-}
-
-// Extract attribute safely
-function attr<T>(attributes: Record<string, unknown> | undefined, key: string): T | undefined {
-  return attributes?.[key] as T | undefined;
-}
-
-// Map API node to frontend node based on type
-function mapApiNodeToFrontend(dto: CvNodeDto): CVNode {
-  const type = mapNodeType(dto.type!);
-  const attributes = dto.attributes as Record<string, unknown> | undefined;
-
-  const base = {
-    id: dto.id!,
-    parentId: dto.parentId ?? null,
-    label: dto.label ?? '',
-    description: dto.description,
-    isDraft: attr<boolean>(attributes, 'isDraft') ?? false,
-  };
-
-  switch (type) {
-    case 'profile':
-      return {
-        ...base,
-        type: 'profile',
-        name: attr<string>(attributes, 'name') ?? dto.label ?? '',
-        title: attr<string>(attributes, 'title') ?? '',
-        subtitle: attr<string>(attributes, 'subtitle') ?? '',
-        experience: attr<string>(attributes, 'experience') ?? '',
-        email: attr<string>(attributes, 'email') ?? '',
-        location: attr<string>(attributes, 'location') ?? '',
-        photoUrl: attr<string>(attributes, 'photoUrl') ?? '',
-      } as CVProfileNode;
-
-    case 'category':
-      return {
-        ...base,
-        type: 'category',
-        sectionId: (attr<string>(attributes, 'sectionId') ?? dto.id) as CVSectionId,
-      } as CVCategoryNode;
-
-    case 'item':
-      return {
-        ...base,
-        type: 'item',
-        company: attr<string>(attributes, 'company'),
-        dateRange: attr<string>(attributes, 'dateRange'),
-        location: attr<string>(attributes, 'location'),
-        highlights: attr<string[]>(attributes, 'highlights'),
-        technologies: attr<string[]>(attributes, 'technologies'),
-      } as CVItemNode;
-
-    case 'skill-group':
-      return {
-        ...base,
-        type: 'skill-group',
-        proficiencyLevel: attr<CVSkillGroupNode['proficiencyLevel']>(attributes, 'proficiencyLevel'),
-      } as CVSkillGroupNode;
-
-    case 'skill':
-      return {
-        ...base,
-        type: 'skill',
-        proficiencyLevel: attr<CVSkillNode['proficiencyLevel']>(attributes, 'proficiencyLevel'),
-        yearsOfExperience: attr<number>(attributes, 'yearsOfExperience'),
-      } as CVSkillNode;
-  }
-}
-
-// Map API response to CVData with positions
-function mapApiResponse(nodes: CvNodeDto[]): CVData {
-  const cvNodes: CVNode[] = nodes.map(mapApiNodeToFrontend);
-
-  const positions: NodePosition[] = nodes
-    .filter((n) => n.positionX != null && n.positionY != null)
-    .map((n) => ({
-      nodeId: n.id!,
-      x: n.positionX!,
-      y: n.positionY!,
-    }));
-
-  return { nodes: cvNodes, positions };
-}
 
 // Union type for create commands
 export type CreateNodeCommand =
@@ -158,8 +53,8 @@ class ApiCVService implements CVService {
     }
 
     const response = await getAllNodes();
-    const nodes = response.data.nodes ?? [];
-    this.cachedData = mapApiResponse(nodes);
+    const nodes = (response.data.nodes ?? []) as CVNode[];
+    this.cachedData = { nodes };
     return this.cachedData;
   }
 
@@ -175,14 +70,13 @@ class ApiCVService implements CVService {
 
   async searchNodes(query: string): Promise<CVNode[]> {
     const response = await search({ q: query });
-    return (response.data ?? []).map(mapApiNodeToFrontend);
+    return (response.data ?? []) as CVNode[];
   }
 
   async updateNode(id: string, updates: UpdateNodeCommand): Promise<CVNode> {
-    // Backend requires id in request body to match path variable
     const response = await apiUpdateNode(id, { ...updates, id });
-    this.clearCache(); // Invalidate cache after update
-    return mapApiNodeToFrontend(response.data);
+    this.clearCache();
+    return response.data as CVNode;
   }
 
   async deleteNode(id: string): Promise<void> {
@@ -193,27 +87,26 @@ class ApiCVService implements CVService {
   async createNode(type: CVNodeType, data: CreateNodeCommand): Promise<CVNode> {
     let response;
     switch (type) {
-      case 'category':
+      case CvNodeDtoType.CATEGORY:
         response = await apiCreateCategory(data as CreateCategoryCommand);
         break;
-      case 'item':
+      case CvNodeDtoType.ITEM:
         response = await apiCreateItem(data as CreateItemCommand);
         break;
-      case 'skill-group':
+      case CvNodeDtoType.SKILL_GROUP:
         response = await apiCreateSkillGroup(data as CreateSkillGroupCommand);
         break;
-      case 'skill':
+      case CvNodeDtoType.SKILL:
         response = await apiCreateSkill(data as CreateSkillCommand);
         break;
-      case 'profile':
+      case CvNodeDtoType.PROFILE:
         response = await apiCreateProfile(data as CreateProfileCommand);
         break;
     }
     this.clearCache();
-    return mapApiNodeToFrontend(response.data);
+    return response.data as CVNode;
   }
 
-  // Clear cache to force reload
   clearCache(): void {
     this.cachedData = null;
   }

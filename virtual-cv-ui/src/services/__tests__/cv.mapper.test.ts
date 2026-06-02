@@ -2,65 +2,69 @@ import { describe, it, expect } from 'vitest'
 import { computeNodeState, buildNodes, buildEdges } from '../cv.mapper'
 import type { CVNode, CVData } from '../../types'
 
-// Minimal node fixtures
+// Minimal node fixtures using the new decorator model (CvNodeDtoType enum values)
 const profileNode: CVNode = {
   id: 'profile',
-  type: 'profile',
-  parentId: null,
+  type: 'PROFILE',
+  parentId: undefined,
   label: 'Profile',
-  name: 'Test User',
-  title: 'Engineer',
-  subtitle: 'Full Stack',
-  experience: '5 years',
-  email: 'test@example.com',
-  location: 'Berlin',
-  photoUrl: '/photo.jpg',
+  attributes: {
+    name: 'Test User',
+    title: 'Engineer',
+    subtitle: 'Full Stack',
+    experience: '5 years',
+    email: 'test@example.com',
+    location: 'Berlin',
+    photoUrl: '/photo.jpg',
+  },
+  positionX: 0,
+  positionY: 0,
 }
 
 const workCategory: CVNode = {
   id: 'work',
-  type: 'category',
+  type: 'CATEGORY',
   parentId: 'profile',
   label: 'Work Experience',
-  sectionId: 'work',
+  attributes: { sectionId: 'work' },
+  positionX: 200,
+  positionY: -100,
 }
 
 const skillsCategory: CVNode = {
   id: 'skills',
-  type: 'category',
+  type: 'CATEGORY',
   parentId: 'profile',
   label: 'Technical Skills',
-  sectionId: 'skills',
+  attributes: { sectionId: 'skills' },
+  positionX: 200,
+  positionY: 100,
 }
 
 const jobItem: CVNode = {
   id: 'job-1',
-  type: 'item',
+  type: 'ITEM',
   parentId: 'work',
   label: 'Software Engineer',
-  company: 'Acme Corp',
-  dateRange: '2020-2024',
+  attributes: { company: 'Acme Corp', dateRange: '2020-2024' },
+  positionX: 400,
+  positionY: -100,
 }
 
 const draftItem: CVNode = {
   id: 'draft-1',
-  type: 'item',
+  type: 'ITEM',
   parentId: 'work',
   label: 'Draft Job',
-  isDraft: true,
+  attributes: { isDraft: true },
+  positionX: 400,
+  positionY: 0,
 }
 
 const allNodes: CVNode[] = [profileNode, workCategory, skillsCategory, jobItem, draftItem]
 
 const cvData: CVData = {
   nodes: allNodes,
-  positions: [
-    { nodeId: 'profile', x: 0, y: 0 },
-    { nodeId: 'work', x: 200, y: -100 },
-    { nodeId: 'skills', x: 200, y: 100 },
-    { nodeId: 'job-1', x: 400, y: -100 },
-    { nodeId: 'draft-1', x: 400, y: 0 },
-  ],
 }
 
 describe('computeNodeState', () => {
@@ -122,7 +126,7 @@ describe('buildNodes', () => {
     expect(workNode).toBeDefined()
     expect(workNode!.type).toBe('graphNode')
     expect(workNode!.data.label).toBe('Work Experience')
-    expect(workNode!.data.nodeType).toBe('category')
+    expect(workNode!.data.nodeType).toBe('CATEGORY')
     expect(workNode!.data.state).toBe('detailed')
   })
 

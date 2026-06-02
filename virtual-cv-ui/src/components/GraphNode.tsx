@@ -3,7 +3,9 @@ import { Handle, Position } from '@xyflow/react';
 import Markdown from 'react-markdown';
 import { Plus } from 'lucide-react';
 import SectionIcon from './SectionIcon';
-import type { NodeState, CVNodeType, GraphNodeData } from '../types';
+import { CvNodeDtoType } from '../api/generated';
+import type { NodeState, GraphNodeData } from '../services';
+import type { CVNodeType } from '../types';
 import './GraphNode.css';
 
 // Re-export types for backward compatibility
@@ -19,7 +21,7 @@ interface GraphNodeProps {
 function AddChildButton({ nodeId, onAddChild }: { nodeId: string; onAddChild?: (parentId: string) => void }) {
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
-      e.stopPropagation(); // Prevent node selection
+      e.stopPropagation();
       onAddChild?.(nodeId);
     },
     [nodeId, onAddChild]
@@ -36,14 +38,15 @@ function AddChildButton({ nodeId, onAddChild }: { nodeId: string; onAddChild?: (
 
 function GraphNode({ id, data }: GraphNodeProps) {
   const { label, nodeType, state, content, selected, isDraft, editMode, onAddChild } = data;
+  const typeClass = nodeType.toLowerCase().replace('_', '-');
   const selectedClass = selected ? 'selected' : '';
   const draftClass = isDraft ? 'draft' : '';
   const editModeClass = editMode ? 'edit-mode' : '';
 
-  // Show add button on quickview nodes in edit mode (leaf types can't have children)
-  const showAddButton = editMode && state === 'quickview' && nodeType !== 'skill' && nodeType !== 'item';
+  const showAddButton = editMode && state === 'quickview' &&
+    nodeType !== CvNodeDtoType.SKILL && nodeType !== CvNodeDtoType.ITEM;
 
-  // Dormant state - just a dot (can still be selected when navigating back)
+  // Dormant state
   if (state === 'dormant') {
     return (
       <div className={`graph-node dormant ${selectedClass} ${draftClass} ${editModeClass}`}>
@@ -53,8 +56,8 @@ function GraphNode({ id, data }: GraphNodeProps) {
     );
   }
 
-  // Profile node - special handling for business card
-  if (nodeType === 'profile') {
+  // Profile node
+  if (nodeType === CvNodeDtoType.PROFILE) {
     if (state === 'detailed') {
       return (
         <div className={`graph-node profile detailed ${selectedClass} ${draftClass} ${editModeClass}`}>
@@ -83,7 +86,6 @@ function GraphNode({ id, data }: GraphNodeProps) {
         </div>
       );
     }
-    // Quickview - circular photo
     return (
       <div className={`graph-node profile quickview ${selectedClass} ${draftClass} ${editModeClass}`}>
         <img src={data.photoUrl} alt={data.name} className="profile-photo" />
@@ -95,9 +97,9 @@ function GraphNode({ id, data }: GraphNodeProps) {
   }
 
   // Category node with icon
-  if (nodeType === 'category' && data.icon) {
+  if (nodeType === CvNodeDtoType.CATEGORY && data.icon) {
     return (
-      <div className={`graph-node ${nodeType} ${state} ${selectedClass} ${draftClass} ${editModeClass}`}>
+      <div className={`graph-node ${typeClass} ${state} ${selectedClass} ${draftClass} ${editModeClass}`}>
         <SectionIcon icon={data.icon} size={state === 'detailed' ? 24 : 20} className="category-icon" />
         <span className="node-label">{label}</span>
         {showAddButton && <AddChildButton nodeId={id} onAddChild={onAddChild} />}
@@ -110,7 +112,7 @@ function GraphNode({ id, data }: GraphNodeProps) {
   // Detailed state with markdown content
   if (state === 'detailed' && content) {
     return (
-      <div className={`graph-node ${nodeType} ${state} ${selectedClass} ${draftClass} ${editModeClass}`}>
+      <div className={`graph-node ${typeClass} ${state} ${selectedClass} ${draftClass} ${editModeClass}`}>
         <div className="markdown-content">
           <Markdown>{content}</Markdown>
         </div>
@@ -120,9 +122,9 @@ function GraphNode({ id, data }: GraphNodeProps) {
     );
   }
 
-  // Quickview and fallback for detailed without content
+  // Quickview and fallback
   return (
-    <div className={`graph-node ${nodeType} ${state} ${selectedClass} ${draftClass} ${editModeClass}`}>
+    <div className={`graph-node ${typeClass} ${state} ${selectedClass} ${draftClass} ${editModeClass}`}>
       <span className="node-label">{label}</span>
       {showAddButton && <AddChildButton nodeId={id} onAddChild={onAddChild} />}
       <Handle type="source" position={Position.Right} />
@@ -132,7 +134,6 @@ function GraphNode({ id, data }: GraphNodeProps) {
 }
 
 // Custom comparison to prevent re-renders during drag
-// Only re-render if visual properties change, not function references
 function arePropsEqual(prev: GraphNodeProps, next: GraphNodeProps): boolean {
   return (
     prev.id === next.id &&

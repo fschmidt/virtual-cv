@@ -22,7 +22,7 @@ public interface CvNodeRepository extends JpaRepository<CvNode, String> {
     // DTO queries (for reads)
     @Query("""
             SELECT new de.fschmidt.virtualcv.dto.CvNodeDto(
-                n.id, n.type, n.parent.id, n.label, n.description,
+                n.id, n.type, n.parent.id, n.label, n.markdownContent,
                 n.attributes, n.positionX, n.positionY
             )
             FROM CvNode n
@@ -32,7 +32,7 @@ public interface CvNodeRepository extends JpaRepository<CvNode, String> {
 
     @Query("""
             SELECT new de.fschmidt.virtualcv.dto.CvNodeDto(
-                n.id, n.type, n.parent.id, n.label, n.description,
+                n.id, n.type, n.parent.id, n.label, n.markdownContent,
                 n.attributes, n.positionX, n.positionY
             )
             FROM CvNode n
@@ -42,7 +42,7 @@ public interface CvNodeRepository extends JpaRepository<CvNode, String> {
 
     @Query("""
             SELECT new de.fschmidt.virtualcv.dto.CvNodeDto(
-                n.id, n.type, n.parent.id, n.label, n.description,
+                n.id, n.type, n.parent.id, n.label, n.markdownContent,
                 n.attributes, n.positionX, n.positionY
             )
             FROM CvNode n
@@ -53,12 +53,12 @@ public interface CvNodeRepository extends JpaRepository<CvNode, String> {
 
     @Query("""
             SELECT new de.fschmidt.virtualcv.dto.CvNodeDto(
-                n.id, n.type, n.parent.id, n.label, n.description,
+                n.id, n.type, n.parent.id, n.label, n.markdownContent,
                 n.attributes, n.positionX, n.positionY
             )
             FROM CvNode n
             WHERE LOWER(n.label) LIKE LOWER(CONCAT('%', :query, '%'))
-               OR LOWER(n.description) LIKE LOWER(CONCAT('%', :query, '%'))
+               OR LOWER(n.markdownContent) LIKE LOWER(CONCAT('%', :query, '%'))
             """)
     List<CvNodeDto> search(String query);
 }

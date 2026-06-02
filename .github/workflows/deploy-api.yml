@@ -69,7 +69,9 @@ jobs:
           echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
 
-      - name: Rollout restart
+      - name: Deploy with branch image tag
         run: |
-          kubectl rollout restart deployment/virtual-cv-api -n virtual-cv
-          kubectl rollout status deployment/virtual-cv-api -n virtual-cv --timeout=120s
+          IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's|/|-|g')
+          sed -i "s|IMAGE_TAG|${IMAGE_TAG}|g" k8s/api-deployment.yaml
+          kubectl apply -f k8s/api-deployment.yaml
+          kubectl rollout status deployment/virtual-cv-api -n virtual-cv --timeout=300s

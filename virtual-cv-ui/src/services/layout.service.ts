@@ -1,28 +1,31 @@
-import type { CVNode, NodePosition, NodeState } from '../types';
+import type { CVNode } from '../types';
+import type { NodeState } from './cv.mapper';
+
+interface NodePosition { nodeId: string; x: number; y: number }
 
 // Node sizes by type and state
 const NODE_SIZES: Record<string, Record<NodeState, { width: number; height: number }>> = {
-  profile: {
+  PROFILE: {
     dormant: { width: 10, height: 10 },
     quickview: { width: 80, height: 80 },
     detailed: { width: 360, height: 420 },
   },
-  category: {
+  CATEGORY: {
     dormant: { width: 10, height: 10 },
     quickview: { width: 80, height: 80 },
     detailed: { width: 150, height: 80 },
   },
-  item: {
+  ITEM: {
     dormant: { width: 10, height: 10 },
     quickview: { width: 80, height: 80 },
     detailed: { width: 420, height: 300 },
   },
-  'skill-group': {
+  SKILL_GROUP: {
     dormant: { width: 10, height: 10 },
     quickview: { width: 80, height: 80 },
     detailed: { width: 160, height: 80 },
   },
-  skill: {
+  SKILL: {
     dormant: { width: 10, height: 10 },
     quickview: { width: 80, height: 80 },
     detailed: { width: 200, height: 120 },
@@ -66,8 +69,8 @@ function calcVerticalSpacing(nodes: CVNode[], states: Map<string, NodeState>): n
 }
 
 // Build adjacency map: parentId -> children
-function buildChildrenMap(nodes: CVNode[]): Map<string | null, CVNode[]> {
-  const map = new Map<string | null, CVNode[]>();
+function buildChildrenMap(nodes: CVNode[]): Map<string | undefined, CVNode[]> {
+  const map = new Map<string | undefined, CVNode[]>();
   for (const node of nodes) {
     const children = map.get(node.parentId) || [];
     children.push(node);
@@ -79,14 +82,14 @@ function buildChildrenMap(nodes: CVNode[]): Map<string | null, CVNode[]> {
 // Get all ancestor IDs
 function getAncestorIds(nodeId: string, nodes: CVNode[]): string[] {
   const ancestors: string[] = [];
-  let currentId: string | null = nodeId;
+  let currentId: string | undefined = nodeId;
   while (currentId) {
     const node = nodes.find((n) => n.id === currentId);
     if (node?.parentId) {
       ancestors.push(node.parentId);
       currentId = node.parentId;
     } else {
-      currentId = null;
+      currentId = undefined;
     }
   }
   return ancestors;
@@ -155,7 +158,7 @@ export function computeLayout(
     nodeStates.set(node.id, computeNodeState(node.id, selectedId, nodes, inspectorMode));
   }
 
-  const profile = nodes.find((n) => n.type === 'profile');
+  const profile = nodes.find((n) => n.type === 'PROFILE');
   if (!profile) return positions;
 
   const profileState = nodeStates.get(profile.id) || 'detailed';

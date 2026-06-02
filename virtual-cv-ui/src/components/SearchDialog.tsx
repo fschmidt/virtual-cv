@@ -1,7 +1,9 @@
 import { memo, useState, useEffect, useRef, useMemo } from 'react';
 import SectionIcon from './SectionIcon';
 import DialogOverlay from './DialogOverlay';
+import { CvNodeDtoType } from '../api/generated';
 import type { CVData, CVNode, CV_SECTIONS } from '../types';
+import { categoryAttrs } from '../types';
 import type { ContentMap } from '../services';
 import './SearchDialog.css';
 
@@ -21,8 +23,9 @@ interface SearchResult {
 }
 
 function getNodeIcon(node: CVNode, sections: typeof CV_SECTIONS): string | undefined {
-  if (node.type === 'category' && 'sectionId' in node) {
-    const section = sections.find((s) => s.id === node.sectionId);
+  if (node.type === CvNodeDtoType.CATEGORY) {
+    const c = categoryAttrs(node);
+    const section = sections.find((s) => s.id === c.sectionId);
     return section?.icon;
   }
   return undefined;
@@ -30,15 +33,15 @@ function getNodeIcon(node: CVNode, sections: typeof CV_SECTIONS): string | undef
 
 function getNodeTypeLabel(node: CVNode): string {
   switch (node.type) {
-    case 'profile':
+    case CvNodeDtoType.PROFILE:
       return 'Profile';
-    case 'category':
+    case CvNodeDtoType.CATEGORY:
       return 'Category';
-    case 'item':
+    case CvNodeDtoType.ITEM:
       return 'Experience';
-    case 'skill-group':
+    case CvNodeDtoType.SKILL_GROUP:
       return 'Skill Group';
-    case 'skill':
+    case CvNodeDtoType.SKILL:
       return 'Skill';
     default:
       return '';
@@ -58,7 +61,6 @@ function SearchDialog({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Filter nodes based on query
   const results = useMemo<SearchResult[]>(() => {
     if (!query.trim()) return [];
 
@@ -66,8 +68,7 @@ function SearchDialog({
     const matches: SearchResult[] = [];
 
     for (const node of cvData.nodes) {
-      // Skip profile from search results
-      if (node.type === 'profile') continue;
+      if (node.type === CvNodeDtoType.PROFILE) continue;
 
       const labelMatch = node.label.toLowerCase().includes(lowerQuery);
       const content = contentMap[node.id] || '';
@@ -88,10 +89,9 @@ function SearchDialog({
       }
     }
 
-    return matches.slice(0, 10); // Limit to 10 results
+    return matches.slice(0, 10);
   }, [query, cvData.nodes, contentMap, sections]);
 
-  // Reset form state and focus input when dialog opens
   useEffect(() => {
     if (isOpen) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: resetting form state when dialog opens is a controlled transition, not a cascading render
@@ -101,7 +101,6 @@ function SearchDialog({
     }
   }, [isOpen]);
 
-  // Scroll selected item into view
   useEffect(() => {
     if (listRef.current && results.length > 0) {
       const selectedElement = listRef.current.children[selectedIndex] as HTMLElement;
@@ -109,7 +108,6 @@ function SearchDialog({
     }
   }, [selectedIndex, results.length]);
 
-  // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     switch (e.key) {
       case 'ArrowDown':

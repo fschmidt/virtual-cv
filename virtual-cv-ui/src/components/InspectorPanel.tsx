@@ -6,7 +6,9 @@ import NodeViewProfile from './NodeViewProfile';
 import NodeEditProfile from './NodeEditProfile';
 import NodeView from './NodeView';
 import NodeEditForm from './NodeEditForm';
-import type { CVNode, CVProfileNode, CVData, CVSection, CVNodeType } from '../types';
+import { CvNodeDtoType } from '../api/generated';
+import type { CVNode, CVData, CVSection, CVNodeType } from '../types';
+import { profileAttrs, itemAttrs, skillAttrs } from '../types';
 import { getParentChain, getSectionIcon } from '../utils/node-utils';
 import type { ContentMap, UpdateNodeCommand, CreateNodeCommand } from '../services';
 import { toUpdateNodeCommand, type FormData } from '../utils/form-utils';
@@ -22,26 +24,21 @@ interface InspectorPanelProps {
   sections: CVSection[];
   onClose: () => void;
   editModeEnabled?: boolean;
-  onSave?: (id: string, updates: UpdateNodeCommand, content?: string) => Promise<void>;
+  onSave?: (id: string, updates: UpdateNodeCommand) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
   onCreate?: (type: CVNodeType, data: CreateNodeCommand) => Promise<void>;
   onPublish?: (id: string, publish: boolean) => Promise<void>;
-}
-
-function isProfileNode(node: CVNode): node is CVProfileNode {
-  return node.type === 'profile';
 }
 
 // Build form data from node
 function buildFormDataFromNode(node: CVNode): FormData {
   const base: FormData = {
     label: node.label,
-    description: node.description,
   };
 
   switch (node.type) {
-    case 'profile': {
-      const p = node as CVProfileNode;
+    case CvNodeDtoType.PROFILE: {
+      const p = profileAttrs(node);
       return {
         ...base,
         attributes: {
@@ -55,23 +52,27 @@ function buildFormDataFromNode(node: CVNode): FormData {
         },
       };
     }
-    case 'item':
+    case CvNodeDtoType.ITEM: {
+      const item = itemAttrs(node);
       return {
         ...base,
         attributes: {
-          company: 'company' in node ? node.company : undefined,
-          dateRange: 'dateRange' in node ? node.dateRange : undefined,
-          location: 'location' in node ? node.location : undefined,
+          company: item.company,
+          dateRange: item.dateRange,
+          location: item.location,
         },
       };
-    case 'skill':
-    case 'skill-group':
+    }
+    case CvNodeDtoType.SKILL:
+    case CvNodeDtoType.SKILL_GROUP: {
+      const skill = skillAttrs(node);
       return {
         ...base,
         attributes: {
-          proficiencyLevel: 'proficiencyLevel' in node ? node.proficiencyLevel : undefined,
+          proficiencyLevel: skill.proficiencyLevel,
         },
       };
+    }
     default:
       return base;
   }
@@ -111,8 +112,9 @@ function InspectorPanel({
 
   const node = selectedId ? cvData.nodes.find((n) => n.id === selectedId) : null;
   const hasChildren = selectedId ? cvData.nodes.some((n) => n.parentId === selectedId) : false;
-  const canDelete = node ? node.type !== 'profile' : false;
-  const canHaveChildren = node ? node.type !== 'item' && node.type !== 'skill' : false;
+  const canDelete = node ? node.type !== CvNodeDtoType.PROFILE : false;
+  const canHaveChildren = node ? node.type !== CvNodeDtoType.ITEM && node.type !== CvNodeDtoType.SKILL : false;
+  const isProfile = node?.type === CvNodeDtoType.PROFILE;
 
   // Reset edit state when selected node changes
   useEffect(() => {
@@ -143,7 +145,8 @@ function InspectorPanel({
     if (!selectedId || !onPublish || !node) return;
     setIsPublishing(true);
     try {
-      await onPublish(selectedId, node.isDraft ?? false);
+      const { isDraft } = await import('../types');
+      await onPublish(selectedId, isDraft(node));
     } catch {
       // Error is handled by App.tsx via toast
     } finally {
@@ -177,7 +180,7 @@ function InspectorPanel({
     if (node && selectedId) {
       setFormData({
         ...buildFormDataFromNode(node),
-        content: contentMap[selectedId] ?? '',
+        markdownContent: contentMap[selectedId] ?? '',
       });
       setIsEditing(true);
       setError(null);
@@ -197,7 +200,7 @@ function InspectorPanel({
     setIsSaving(true);
     setError(null);
     try {
-      await onSave(selectedId, toUpdateNodeCommand(formData), formData.content);
+      await onSave(selectedId, toUpdateNodeCommand(formData));
       setIsEditing(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save changes');
@@ -238,7 +241,7 @@ function InspectorPanel({
   );
 
   // Profile edit form
-  if (isProfileNode(node) && isEditing) {
+  if (isProfile && isEditing) {
     return (
       <div className="inspector-panel" {...touchHandlers}>
         {closeButton}
@@ -255,7 +258,7 @@ function InspectorPanel({
   }
 
   // Profile view
-  if (isProfileNode(node)) {
+  if (isProfile) {
     return (
       <div className="inspector-panel" {...touchHandlers}>
         {closeButton}

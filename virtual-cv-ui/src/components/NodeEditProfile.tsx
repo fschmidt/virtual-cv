@@ -1,7 +1,6 @@
 interface FormData {
   label?: string;
-  description?: string;
-  content?: string;
+  markdownContent?: string;
   attributes?: Record<string, string | undefined>;
 }
 
@@ -86,8 +85,8 @@ function NodeEditProfile({
         <label className="edit-field edit-field-content">
           <span>About (Markdown)</span>
           <textarea
-            value={formData.content ?? ''}
-            onChange={(e) => onFieldChange('content', e.target.value)}
+            value={formData.markdownContent ?? ''}
+            onChange={(e) => onFieldChange('markdownContent', e.target.value)}
             rows={8}
             placeholder="Enter markdown content..."
           />

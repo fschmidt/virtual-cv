@@ -3,8 +3,7 @@ import type { UpdateNodeCommand } from '../services';
 // Local form data type with flat string attributes for UI
 export interface FormData {
   label?: string;
-  description?: string;
-  content?: string;
+  markdownContent?: string;
   attributes?: Record<string, string | undefined>;
 }
 
@@ -12,7 +11,7 @@ export interface FormData {
 export function toUpdateNodeCommand(data: FormData): UpdateNodeCommand {
   const result: UpdateNodeCommand = {
     label: data.label,
-    description: data.content ?? data.description,
+    markdownContent: data.markdownContent,
   };
 
   if (data.attributes && Object.keys(data.attributes).length > 0) {

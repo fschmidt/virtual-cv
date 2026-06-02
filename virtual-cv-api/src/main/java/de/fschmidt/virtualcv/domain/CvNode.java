@@ -30,8 +30,8 @@ public class CvNode {
     @Column(nullable = false)
     private String label;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Column(name = "markdown_content", columnDefinition = "TEXT")
+    private String markdownContent;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
@@ -103,12 +103,12 @@ public class CvNode {
         this.label = label;
     }
 
-    public String getDescription() {
-        return description;
+    public String getMarkdownContent() {
+        return markdownContent;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setMarkdownContent(String markdownContent) {
+        this.markdownContent = markdownContent;
     }
 
     public Map<String, Object> getAttributes() {

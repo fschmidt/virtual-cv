@@ -2,40 +2,38 @@ import { describe, it, expect } from 'vitest';
 import { toUpdateNodeCommand } from '../../utils/form-utils';
 
 describe('toUpdateNodeCommand', () => {
-  it('maps content field to description for profile nodes', () => {
+  it('maps markdownContent field for profile nodes', () => {
     const result = toUpdateNodeCommand({
       label: 'Frank Schmidt',
-      content: '## About\nSenior developer with 12+ years experience',
+      markdownContent: '## About\nSenior developer with 12+ years experience',
       attributes: { name: 'Frank Schmidt' },
     });
 
-    expect(result.description).toBe('## About\nSenior developer with 12+ years experience');
+    expect(result.markdownContent).toBe('## About\nSenior developer with 12+ years experience');
   });
 
-  it('maps content field to description for item nodes', () => {
+  it('maps markdownContent field for item nodes', () => {
     const result = toUpdateNodeCommand({
       label: 'Senior Developer',
-      description: 'Short desc',
-      content: '**2020 - Present**\nWorked on various projects',
+      markdownContent: '**2020 - Present**\nWorked on various projects',
       attributes: { company: 'Acme' },
     });
 
-    expect(result.description).toBe('**2020 - Present**\nWorked on various projects');
+    expect(result.markdownContent).toBe('**2020 - Present**\nWorked on various projects');
   });
 
-  it('falls back to description when content is undefined', () => {
+  it('passes through undefined markdownContent', () => {
     const result = toUpdateNodeCommand({
       label: 'Skills',
-      description: 'Technical skills overview',
     });
 
-    expect(result.description).toBe('Technical skills overview');
+    expect(result.markdownContent).toBeUndefined();
   });
 
   it('includes label in the command', () => {
     const result = toUpdateNodeCommand({
       label: 'My Node',
-      content: 'Some content',
+      markdownContent: 'Some content',
     });
 
     expect(result.label).toBe('My Node');

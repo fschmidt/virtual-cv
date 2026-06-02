@@ -1,5 +1,7 @@
 import { Document, Page, Text, View, Image, Link, StyleSheet } from '@react-pdf/renderer';
-import type { CVData, CVNode, CVProfileNode, CVCategoryNode, CV_SECTIONS } from '../types';
+import { CvNodeDtoType } from '../api/generated';
+import type { CVData, CVNode, CV_SECTIONS } from '../types';
+import { profileAttrs, categoryAttrs } from '../types';
 import type { ContentMap } from '../services';
 import { MarkdownContent } from '../utils/markdown-pdf';
 
@@ -200,20 +202,6 @@ const styles = StyleSheet.create({
   },
 });
 
-function isProfileNode(node: CVNode): node is CVProfileNode {
-  return node.type === 'profile';
-}
-
-function isCategoryNode(node: CVNode): node is CVCategoryNode {
-  return node.type === 'category';
-}
-
-interface CVDocumentProps {
-  cvData: CVData;
-  contentMap: ContentMap;
-  sections: typeof CV_SECTIONS;
-}
-
 /** Extract start year from markdown content (e.g. "**2018 - Present**" → 2018). "Present" sorts first. */
 function extractStartYear(content: string | undefined): number {
   if (!content) return 0;
@@ -221,7 +209,6 @@ function extractStartYear(content: string | undefined): number {
   if (!match) return 0;
   const isPresent = match[2] === 'Present';
   const startYear = parseInt(match[1], 10);
-  // Present jobs get a boost so they sort first; otherwise use start year
   return isPresent ? startYear + 10000 : startYear;
 }
 
@@ -230,31 +217,37 @@ const generatedDate = new Date().toLocaleDateString('en-US', {
   month: 'long',
 });
 
+interface CVDocumentProps {
+  cvData: CVData;
+  contentMap: ContentMap;
+  sections: typeof CV_SECTIONS;
+}
+
 export default function CVDocument({ cvData, contentMap, sections }: CVDocumentProps) {
-  const profileNode = cvData.nodes.find(isProfileNode);
-  const categoryNodes = cvData.nodes.filter(isCategoryNode);
+  const profileNode = cvData.nodes.find((n) => n.type === CvNodeDtoType.PROFILE);
+  const categoryNodes = cvData.nodes.filter((n) => n.type === CvNodeDtoType.CATEGORY);
   const getChildren = (parentId: string): CVNode[] =>
     cvData.nodes.filter((node) => node.parentId === parentId);
 
   if (!profileNode) return null;
 
+  const p = profileAttrs(profileNode);
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
 
-  // Sidebar sections: skills, languages
   const sidebarSectionIds = ['skills', 'languages'];
   const mainSections = sortedSections.filter((s) => !sidebarSectionIds.includes(s.id));
   const skillsSection = sortedSections.find((s) => s.id === 'skills');
   const languagesSection = sortedSections.find((s) => s.id === 'languages');
 
   return (
-    <Document title={`${profileNode.name} - CV`} author={profileNode.name}>
+    <Document title={`${p.name} - CV`} author={p.name}>
       <Page size="A4" style={styles.page}>
         {/* ─── FIXED: sidebar background (repeats on every page) ─── */}
         <View style={styles.sidebarBg} fixed />
 
         {/* ─── FIXED: footer (repeats on every page) ─── */}
         <View style={styles.footer} fixed>
-          <Text>{profileNode.email}</Text>
+          <Text>{p.email}</Text>
           <Link src="https://cv.fschmidts.net/" style={styles.footerLink}>
             Generated with cv.fschmidts.net
           </Link>
@@ -267,31 +260,31 @@ export default function CVDocument({ cvData, contentMap, sections }: CVDocumentP
           {/* Contact */}
           <View style={styles.contactSection}>
             <Text style={styles.sidebarSectionHeader}>Contact</Text>
-            {profileNode.location && (
+            {p.location && (
               <View style={styles.contactItem}>
                 <Text style={styles.contactLabel}>Loc</Text>
-                <Text style={styles.contactValue}>{profileNode.location}</Text>
+                <Text style={styles.contactValue}>{p.location}</Text>
               </View>
             )}
-            {profileNode.email && (
+            {p.email && (
               <View style={styles.contactItem}>
                 <Text style={styles.contactLabel}>Mail</Text>
-                <Text style={styles.contactValue}>{profileNode.email}</Text>
+                <Text style={styles.contactValue}>{p.email}</Text>
               </View>
             )}
-            {profileNode.experience && (
+            {p.experience && (
               <View style={styles.contactItem}>
                 <Text style={styles.contactLabel}>Exp</Text>
-                <Text style={styles.contactValue}>{profileNode.experience}</Text>
+                <Text style={styles.contactValue}>{p.experience}</Text>
               </View>
             )}
           </View>
 
           {/* Skills */}
           {skillsSection && (() => {
-            const categoryNode = categoryNodes.find((c) => c.sectionId === 'skills');
-            if (!categoryNode) return null;
-            const groups = getChildren(categoryNode.id).filter((n) => n.type === 'skill-group');
+            const catNode = categoryNodes.find((c) => categoryAttrs(c).sectionId === 'skills');
+            if (!catNode) return null;
+            const groups = getChildren(catNode.id).filter((n) => n.type === CvNodeDtoType.SKILL_GROUP);
             return (
               <View style={{ marginBottom: 16 }}>
                 <Text style={styles.sidebarSectionHeader}>{skillsSection.label}</Text>
@@ -316,9 +309,9 @@ export default function CVDocument({ cvData, contentMap, sections }: CVDocumentP
 
           {/* Languages */}
           {languagesSection && (() => {
-            const categoryNode = categoryNodes.find((c) => c.sectionId === 'languages');
-            if (!categoryNode) return null;
-            const items = getChildren(categoryNode.id);
+            const catNode = categoryNodes.find((c) => categoryAttrs(c).sectionId === 'languages');
+            if (!catNode) return null;
+            const items = getChildren(catNode.id);
             return (
               <View>
                 <Text style={styles.sidebarSectionHeader}>{languagesSection.label}</Text>
@@ -337,14 +330,14 @@ export default function CVDocument({ cvData, contentMap, sections }: CVDocumentP
         <View style={styles.main}>
           {/* Header */}
           <View style={styles.header}>
-            {profileNode.photoUrl && (
-              <Image src={profileNode.photoUrl} style={styles.photo} />
+            {p.photoUrl && (
+              <Image src={p.photoUrl} style={styles.photo} />
             )}
             <View style={styles.headerContent}>
-              <Text style={styles.name}>{profileNode.name}</Text>
-              <Text style={styles.title}>{profileNode.title}</Text>
-              {profileNode.subtitle && (
-                <Text style={styles.subtitle}>{profileNode.subtitle}</Text>
+              <Text style={styles.name}>{p.name}</Text>
+              <Text style={styles.title}>{p.title}</Text>
+              {p.subtitle && (
+                <Text style={styles.subtitle}>{p.subtitle}</Text>
               )}
             </View>
           </View>
@@ -358,10 +351,10 @@ export default function CVDocument({ cvData, contentMap, sections }: CVDocumentP
 
           {/* Main sections (Work, Education) */}
           {mainSections.map((section) => {
-            const categoryNode = categoryNodes.find((c) => c.sectionId === section.id);
-            if (!categoryNode) return null;
+            const catNode = categoryNodes.find((c) => categoryAttrs(c).sectionId === section.id);
+            if (!catNode) return null;
 
-            const items = getChildren(categoryNode.id)
+            const items = getChildren(catNode.id)
               .sort((a, b) => extractStartYear(contentMap[b.id]) - extractStartYear(contentMap[a.id]));
 
             return (

@@ -47,72 +47,15 @@ See [docs/backlog.md](docs/backlog.md) for the full roadmap. Key priorities:
 - Export features (PDF, Markdown)
 - UI polish (animations, auto-layout)
 
-## Monorepo Structure
+## Monorepo Structure 
+- k8s: app deployment manifests only (API Deployment/Service/Ingress + secret)
+- docs: documentation and roadmap
+- virtual-cv-api: backend
+- virtual-cv-ui: frontend
 
-```
-virtual-cv/
-├── virtual-cv-ui/              # React + Vite + TypeScript frontend
-│   └── src/
-│       ├── api/
-│       │   ├── generated.ts        # Auto-generated API client (NEVER edit)
-│       │   ├── fetcher.ts          # Custom fetch with error handling
-│       │   └── errors.ts           # Typed API errors
-│       ├── components/
-│       │   ├── GraphNode.tsx/.css       # Unified node component (3 states)
-│       │   ├── InspectorPanel.tsx/.css  # Side panel orchestrator
-│       │   ├── NodeView.tsx             # Generic node detail view
-│       │   ├── NodeViewProfile.tsx      # Profile node detail view
-│       │   ├── NodeEditForm.tsx         # Generic node edit form
-│       │   ├── NodeEditProfile.tsx      # Profile node edit form
-│       │   ├── DialogOverlay.tsx        # Shared dialog overlay + Escape/click handling
-│       │   ├── CreateNodeDialog.tsx/.css # Node creation dialog
-│       │   ├── DeleteConfirmDialog.tsx/.css # Delete confirmation modal
-│       │   ├── SearchDialog.tsx/.css    # Cmd+K search
-│       │   ├── ViewToggle.tsx/.css      # Graph/CV/Edit mode toggle + PDF download
-│       │   ├── CVDocument.tsx           # react-pdf Document (A4 PDF layout)
-│       │   ├── CVPDFView.tsx/.css       # PDF viewer wrapper (replaces StandardCVView)
-│       │   ├── FeatureTogglePopup.tsx/.css # Dev feature flag + auth toggle
-│       │   ├── Toast.tsx/.css           # Toast notifications
-│       │   ├── LoadingSkeleton.tsx/.css  # Loading placeholder
-│       │   └── SectionIcon.tsx          # Category SVG icons
-│       ├── hooks/
-│       │   └── useGraphState.ts    # Graph state management (CRUD, drag, selection)
-│       ├── types/
-│       │   ├── cv.types.ts         # Domain model
-│       │   └── graph.types.ts      # UI types
-│       ├── services/
-│       │   ├── cv.service.ts       # API service wrapper with caching
-│       │   ├── cv.mapper.ts        # Data → React Flow transform
-│       │   ├── content.service.ts  # Markdown content parsing
-│       │   ├── layout.service.ts   # Node size calculations
-│       │   └── auth.service.ts     # Google OAuth token lifecycle
-│       ├── utils/
-│       │   ├── feature-flags.ts    # Feature toggle system
-│       │   └── node-utils.ts       # Shared node helpers (labels, parent chain)
-│       ├── App.tsx
-│       └── App.css                 # Globals: :root vars, layout, shared keyframes
-├── virtual-cv-api/             # Java Spring Boot backend
-│   └── src/main/java/de/fschmidt/virtualcv/
-│       ├── controller/CvController.java
-│       ├── service/CvNodeService.java
-│       ├── repository/CvNodeRepository.java
-│       ├── domain/CvNode.java
-│       ├── dto/                   # CvDataDto, CvNodeDto
-│       ├── command/               # Create/Update command records
-│       └── config/                # SecurityConfig, CorsConfig
-├── docs/
-│   ├── architecture.md        # Architecture overview & assessment
-│   ├── backlog.md             # Current backlog and roadmap
-│   └── archive/               # Completed plans and historical docs
-│       ├── previous-iterations.md  # Summary of completed iterations
-│       ├── improvement-plan.md     # Quality improvement plan (all 8 milestones completed)
-│       ├── audit-report.md         # Quality & sustainability audit (all findings resolved)
-│       └── initial-roadmap.md      # Original project roadmap
-├── k8s/                       # Kubernetes deployment manifests
-└── .github/workflows/
-    ├── deploy.yml             # Frontend → GitHub Pages
-    └── deploy-api.yml         # Backend → Docker → K8s
-```
+> Cluster setup, the shared PostgreSQL instance (database `virtualcv` at
+> `postgresql.data.svc.cluster.local`), and DB backups live in the separate
+> `fschmidt/infrastructure` repo — not here.
 
 ## Commands
 
@@ -152,17 +95,28 @@ All nodes use a single `GraphNode` component with three states:
 
 ### Node Types
 
-- `profile` - Business card with photo, title, experience, contact
-- `category` - Top-level groups (Work, Skills, Projects, Education)
-- `item` - Individual entries (jobs, projects, degrees)
-- `skill-group` - Skill categories (Frontend, Backend, DevOps)
-- `skill` - Individual skills (React, Java, Docker)
+Uses `CvNodeDtoType` enum from the generated API client (UPPER_CASE values):
+
+- `PROFILE` - Business card with photo, title, experience, contact
+- `CATEGORY` - Top-level groups (Work, Skills, Projects, Education)
+- `ITEM` - Individual entries (jobs, projects, degrees)
+- `SKILL_GROUP` - Skill categories (Frontend, Backend, DevOps)
+- `SKILL` - Individual skills (React, Java, Docker)
 
 ### Data Flow
 
 ```
 Backend (PostgreSQL) → REST API → Generated TS Client → cvService → React Flow
 ```
+
+### Frontend Type Model
+
+The frontend uses generated API types directly — no manual model mapping layer:
+
+- `CVNode extends Omit<CvNodeDto, 'attributes'>` — narrows `id`, `type`, `label` to non-optional, overrides `attributes` to `Record<string, unknown>`
+- `CVData` — wraps `CVNode[]` for the full CV payload
+- **Typed attribute accessors** (decorator pattern): `profileAttrs(node)`, `categoryAttrs(node)`, `itemAttrs(node)`, `skillAttrs(node)`, `isDraft(node)` — extract type-specific fields from the generic `attributes` bag
+- Node content is stored in `markdownContent` (single field, rendered as Markdown in the inspector panel)
 
 ### API Configuration
 

@@ -8,7 +8,7 @@ import {
 } from '@xyflow/react';
 import type { ViewMode } from '../components/ViewToggle';
 import { useToast } from '../components/Toast';
-import { cvService, buildNodes, buildEdges, getAllContent, setNodeContent, type ContentMap, type UpdateNodeCommand, type CreateNodeCommand } from '../services';
+import { cvService, buildNodes, buildEdges, buildContentMap, type ContentMap, type UpdateNodeCommand, type CreateNodeCommand } from '../services';
 import type { CVData, CVNodeType } from '../types';
 
 // Animation duration in ms
@@ -87,11 +87,13 @@ export function useGraphState({ editMode, viewMode, onAddChild }: UseGraphStateO
     cvService.getCVData().then(setCvData);
   }, []);
 
-  // Load content map on mount
+  // Derive content map from CV data
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: loading static content data on mount, not a cascading render
-    setContentMap(getAllContent());
-  }, []);
+    if (cvData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: deriving content map from loaded data, not a cascading render
+      setContentMap(buildContentMap(cvData));
+    }
+  }, [cvData]);
 
   // Sync URL hash with selected node (deep linking)
   useEffect(() => {
@@ -140,15 +142,11 @@ export function useGraphState({ editMode, viewMode, onAddChild }: UseGraphStateO
   }, []);
 
   // CRUD operations
-  const onSaveNode = useCallback(async (id: string, updates: UpdateNodeCommand, content?: string) => {
+  const onSaveNode = useCallback(async (id: string, updates: UpdateNodeCommand) => {
     try {
       await cvService.updateNode(id, updates);
-      if (content !== undefined) {
-        setNodeContent(id, content);
-      }
       const newData = await cvService.getCVData();
       setCvData(newData);
-      setContentMap(getAllContent());
       showToast('Changes saved', 'success');
     } catch (error) {
       showError(error);

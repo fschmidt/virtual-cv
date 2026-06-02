@@ -1,32 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { ReactFlowProvider } from '@xyflow/react';
 import { ToastProvider } from '../../components/Toast';
 import type { ReactNode } from 'react';
+import type { CVData } from '../../types';
 
-// Track setNodeContent calls to verify content propagation
-const mockSetNodeContent = vi.fn();
-const contentStore: Record<string, string> = {};
+const mockUpdateNode = vi.fn().mockResolvedValue({});
+const mockGetCVData = vi.fn<() => Promise<CVData>>();
 
 vi.mock('../../services', () => ({
   cvService: {
-    getCVData: vi.fn().mockResolvedValue({ nodes: [], positions: [] }),
-    updateNode: vi.fn().mockResolvedValue({}),
+    getCVData: (...args: unknown[]) => mockGetCVData(...(args as [])),
+    updateNode: (...args: unknown[]) => mockUpdateNode(...(args as [])),
     deleteNode: vi.fn(),
     createNode: vi.fn(),
     clearCache: vi.fn(),
   },
   buildNodes: vi.fn().mockReturnValue([]),
   buildEdges: vi.fn().mockReturnValue([]),
-  getAllContent: () => ({ ...contentStore }),
-  setNodeContent: (...args: unknown[]) => {
-    mockSetNodeContent(...args);
-    const [id, content] = args as [string, string];
-    if (content?.trim()) {
-      contentStore[id] = content;
-    } else {
-      delete contentStore[id];
+  buildContentMap: (data: CVData) => {
+    const map: Record<string, string> = {};
+    for (const node of data.nodes) {
+      if (node.markdownContent) map[node.id] = node.markdownContent;
     }
+    return map;
   },
 }));
 
@@ -40,16 +37,15 @@ function wrapper({ children }: { children: ReactNode }) {
   );
 }
 
+const emptyData: CVData = { nodes: [] };
+
 describe('useGraphState - onSaveNode', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Clear content store
-    for (const key of Object.keys(contentStore)) {
-      delete contentStore[key];
-    }
+    mockGetCVData.mockResolvedValue(emptyData);
   });
 
-  it('propagates content to content map when saving', async () => {
+  it('reloads data from backend after saving', async () => {
     const { useGraphState } = await import('../useGraphState');
 
     const { result } = renderHook(
@@ -58,15 +54,23 @@ describe('useGraphState - onSaveNode', () => {
     );
 
     await act(async () => {
-      await result.current.onSaveNode('test-node', { label: 'Test' }, '## Updated content');
+      await result.current.onSaveNode('test-node', { label: 'Test', markdownContent: '## Updated' });
     });
 
-    expect(mockSetNodeContent).toHaveBeenCalledWith('test-node', '## Updated content');
-    // Content should be in the map BEFORE getAllContent is called (for React state)
-    expect(contentStore['test-node']).toBe('## Updated content');
+    expect(mockUpdateNode).toHaveBeenCalledWith('test-node', { label: 'Test', markdownContent: '## Updated' });
+    // getCVData called on mount + after save
+    expect(mockGetCVData).toHaveBeenCalledTimes(2);
   });
 
-  it('does not create content entry when saving without content', async () => {
+  it('derives contentMap from backend data after save', async () => {
+    const updatedData: CVData = {
+      nodes: [
+        { id: 'test-node', type: 'CATEGORY', parentId: undefined, label: 'Test', markdownContent: '## Updated content', attributes: { sectionId: 'work' } },
+      ],
+    };
+    // First call (mount): empty, second call (after save): updated
+    mockGetCVData.mockResolvedValueOnce(emptyData).mockResolvedValueOnce(updatedData);
+
     const { useGraphState } = await import('../useGraphState');
 
     const { result } = renderHook(
@@ -75,10 +79,11 @@ describe('useGraphState - onSaveNode', () => {
     );
 
     await act(async () => {
-      await result.current.onSaveNode('test-node', { label: 'Test' });
+      await result.current.onSaveNode('test-node', { label: 'Test', markdownContent: '## Updated content' });
     });
 
-    expect(mockSetNodeContent).not.toHaveBeenCalled();
-    expect(contentStore['test-node']).toBeUndefined();
+    await waitFor(() => {
+      expect(result.current.contentMap).toEqual({ 'test-node': '## Updated content' });
+    });
   });
 });

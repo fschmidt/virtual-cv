@@ -1,7 +1,9 @@
 import Markdown from 'react-markdown';
 import { Pencil, Trash2, Plus, Eye, EyeOff } from 'lucide-react';
 import SectionIcon from './SectionIcon';
+import { CvNodeDtoType } from '../api/generated';
 import type { CVNode } from '../types';
+import { isDraft, itemAttrs, skillAttrs } from '../types';
 
 interface NodeViewProps {
   node: CVNode;
@@ -43,6 +45,10 @@ function NodeView({
   onDelete,
   onCreateChild,
 }: NodeViewProps) {
+  const draft = isDraft(node);
+  const item = node.type === CvNodeDtoType.ITEM ? itemAttrs(node) : null;
+  const skill = (node.type === CvNodeDtoType.SKILL || node.type === CvNodeDtoType.SKILL_GROUP) ? skillAttrs(node) : null;
+
   return (
     <>
       {editModeEnabled && (showEdit || showDelete || showPublish) && (
@@ -54,12 +60,12 @@ function NodeView({
           )}
           {showPublish && (
             <button
-              className={`inspector-publish-btn ${(node.isDraft ?? false) ? 'draft' : 'published'}`}
+              className={`inspector-publish-btn ${draft ? 'draft' : 'published'}`}
               onClick={onPublish}
-              title={(node.isDraft ?? false) ? 'Publish' : 'Unpublish'}
+              title={draft ? 'Publish' : 'Unpublish'}
               disabled={isPublishing}
             >
-              {(node.isDraft ?? false) ? <Eye size={18} strokeWidth={2} /> : <EyeOff size={18} strokeWidth={2} />}
+              {draft ? <Eye size={18} strokeWidth={2} /> : <EyeOff size={18} strokeWidth={2} />}
             </button>
           )}
           {showDelete && canDelete && (
@@ -89,13 +95,13 @@ function NodeView({
       </div>
 
       {/* Meta info for items */}
-      {'company' in node && node.company && <p className="inspector-company">{node.company}</p>}
-      {'dateRange' in node && node.dateRange && <p className="inspector-date">{node.dateRange}</p>}
+      {item?.company && <p className="inspector-company">{item.company}</p>}
+      {item?.dateRange && <p className="inspector-date">{item.dateRange}</p>}
 
       {/* Proficiency for skills */}
-      {'proficiencyLevel' in node && node.proficiencyLevel && (
+      {skill?.proficiencyLevel && (
         <div className="inspector-proficiency">
-          <span className={`proficiency-badge ${node.proficiencyLevel}`}>{node.proficiencyLevel}</span>
+          <span className={`proficiency-badge ${skill.proficiencyLevel}`}>{skill.proficiencyLevel}</span>
         </div>
       )}
 
@@ -105,9 +111,6 @@ function NodeView({
           <Markdown>{content}</Markdown>
         </div>
       )}
-
-      {/* Fallback for nodes without content */}
-      {!content && node.description && <p className="inspector-description">{node.description}</p>}
 
       {/* Add child button */}
       {editModeEnabled && showCreateChild && canHaveChildren && (

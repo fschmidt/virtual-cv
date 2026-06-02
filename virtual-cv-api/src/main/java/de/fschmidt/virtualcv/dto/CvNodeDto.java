@@ -9,7 +9,7 @@ public record CvNodeDto(
         NodeType type,
         String parentId,
         String label,
-        String description,
+        String markdownContent,
         Map<String, Object> attributes,
         Integer positionX,
         Integer positionY

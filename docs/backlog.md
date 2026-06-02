@@ -13,6 +13,7 @@ Forward-looking backlog. For completed work, see [previous iterations](archive/p
 
 ### Iteration B: Content Finetuning
 
+- [x] Model simplification: renamed `description` → `markdownContent`, eliminated frontend model mapping layer (uses generated API types directly with decorator pattern)
 - [ ] Structural adaptations to the data model or UI for specific content needs
 - [ ] Adjust node types, attributes, or layout to better present certain entries
 

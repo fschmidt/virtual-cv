@@ -5,20 +5,10 @@ metadata:
   name: api-config
   namespace: virtual-cv
 data:
-  SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/virtualcv
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql.data.svc.cluster.local:5432/virtualcv
   SPRING_DATASOURCE_USERNAME: virtualcv
   GOOGLE_CLIENT_ID: 669506515393-cv8nd2guomsf2il52r3685eunnvm2q6s.apps.googleusercontent.com
   AUTH_ALLOWED_EMAILS: fschmidt2011@gmail.com
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: api-secrets
-  namespace: virtual-cv
-type: Opaque
-stringData:
-  SPRING_DATASOURCE_PASSWORD: changeme-in-production
 
 ---
 apiVersion: apps/v1
@@ -40,7 +30,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: ghcr.io/fschmidt/virtual-cv-api:latest
+          image: ghcr.io/fschmidt/virtual-cv-api:IMAGE_TAG
           ports:
             - containerPort: 8080
           envFrom:
